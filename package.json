@@ -1,0 +1,15 @@
+{
+  "name": "gameboy-ts-emulator",
+  "version": "1.0.0",
+  "description": "A GameBoy emulator written in TS.",
+  "type": "module",
+  "scripts": {
+    "start": "node --loader ts-node/esm src/index.ts",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.1.0"
+  }
+}
