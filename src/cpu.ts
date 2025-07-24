@@ -252,53 +252,221 @@ export class CPU {
 
       case 0x3f:
       case 0x40:
+        // LD B, B
+        // Effectively a NOP
+        break;
+
       case 0x41:
+        // LD B, C
+        this._B = this._C;
+        break;
+
       case 0x42:
+        // LD B, D
+        this._B = this._D;
+        break;
+
       case 0x43:
+        // LD B, E
+        this._B = this._E;
+        break;
+
       case 0x44:
+        // LD B, H
+        this._B = this._H;
+        break;
+
       case 0x45:
+        // LD B, L
+        this._B = this._L;
+        break;
+
       case 0x46:
       case 0x47:
+        // LD B, A
+        this._B = this._A;
+        break;
+
       case 0x48:
+        // LD C, B
+        this._C = this._B;
+        break;
+
       case 0x49:
+        // LD C, C
+        // Effectively a NOP
+        break;
+
       case 0x4a:
+        // LD C, D
+        this._C = this._D;
+        break;
+
       case 0x4b:
+        // LD C, E
+        this._C = this._E;
+        break;
+
       case 0x4c:
+        // LD C, H
+        this._C = this._H;
+        break;
+
       case 0x4d:
+        // LD C, L
+        this._C = this._L;
+        break;
+
       case 0x4e:
       case 0x4f:
+        // LD C, A
+        this._C = this._A;
+        break;
+
       case 0x50:
+        // LD D, B
+        this._D = this._B;
+        break;
+
       case 0x51:
+        // LD D, C
+        this._D = this._C;
+        break;
+
       case 0x52:
+        // LD D, D
+        // Effectively a NOP
+        break;
+
       case 0x53:
+        // LD D, E
+        this._D = this._E;
+        break;
+
       case 0x54:
+        // LD D, H
+        this._D = this._H;
+        break;
+
       case 0x55:
+        // LD D, L
+        this._D = this._L;
+        break;
+
       case 0x56:
       case 0x57:
+        // LD D, A
+        this._D = this._A;
+        break;
+
       case 0x58:
+        // LD E, B
+        this._E = this._B;
+        break;
+
       case 0x59:
+        // LD E, C
+        this._E = this._C;
+        break;
+
       case 0x5a:
+        // LD E, D
+        this._E = this._D;
+        break;
+
       case 0x5b:
+        // LD E, E
+        // Effectively a NOP
+        break;
+
       case 0x5c:
+        // LD E, H
+        this._E = this._H;
+        break;
+
       case 0x5d:
+        // LD E, L
+        this._E = this._L;
+        break;
+
       case 0x5e:
       case 0x5f:
+        // LD E, A
+        this._E = this._A;
+        break;
+
       case 0x60:
+        // LD H, B
+        this._H = this._B;
+        break;
+
       case 0x61:
+        // LD H, C
+        this._H = this._C;
+        break;
+
       case 0x62:
+        // LD H, D
+        this._H = this._D;
+        break;
+
       case 0x63:
+        // LD H, E
+        this._H = this._E;
+        break;
+
       case 0x64:
+        // LD H, H
+        // Effectively a NOP
+        break;
+
       case 0x65:
+        // LD H, L
+        this._H = this._L;
+        break;
+
       case 0x66:
       case 0x67:
+        // LD H, A
+        this._H = this._A;
+        break;
+
       case 0x68:
+        // LD L, B
+        this._L = this._B;
+        break;
+
       case 0x69:
+        // LD L, C
+        this._L = this._C;
+        break;
+
       case 0x6a:
+        // LD L, D
+        this._L = this._D;
+        break;
+
       case 0x6b:
+        // LD L, E
+        this._L = this._E;
+        break;
+
       case 0x6c:
+        // LD L, H
+        this._L = this._H;
+        break;
+
       case 0x6d:
+        // LD L, L
+        // Effectively a NOP
+        break;
+
       case 0x6e:
       case 0x6f:
+        // LD L, A
+        this._L = this._A;
+        break;
+
       case 0x70:
       case 0x71:
       case 0x72:
@@ -308,13 +476,41 @@ export class CPU {
       case 0x76:
       case 0x77:
       case 0x78:
+        // LD A, B
+        this._A = this._B;
+        break;
+
       case 0x79:
+        // LD A, C
+        this._A = this._C;
+        break;
+
       case 0x7a:
+        // LD A, D
+        this._A = this._D;
+        break;
+
       case 0x7b:
+        // LD A, E
+        this._A = this._E;
+        break;
+
       case 0x7c:
+        // LD A, H
+        this._A = this._H;
+        break;
+
       case 0x7d:
+        // LD A, L
+        this._A = this._L;
+        break;
+
       case 0x7e:
       case 0x7f:
+        // LD A, A
+        // Effectively a NOP
+        break;
+
       case 0x80:
       case 0x81:
       case 0x82:
