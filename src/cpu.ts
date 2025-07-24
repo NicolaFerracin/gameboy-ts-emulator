@@ -1,5 +1,13 @@
+import type { Memory } from "./memory";
 import { u16, u8 } from "./types";
-import { u8Mask, u8Pair, u16Unpair, u16Mask, applyMask } from "./utils";
+import {
+  applyMask,
+  numToHex,
+  u16Mask,
+  u16Unpair,
+  u8Mask,
+  u8Pair,
+} from "./utils.ts";
 
 export class CPU {
   private _A: u8 = 0;
@@ -14,6 +22,7 @@ export class CPU {
   private _SP: u16 = 0;
   private _IR: u16 = 0;
   private _IE: u16 = 0;
+  private _memory: Memory;
 
   get A(): u8 {
     return this._A;
@@ -119,5 +128,38 @@ export class CPU {
   }
   set SP(value: number) {
     this._SP = u16Mask(value);
+  }
+
+  constructor(memory: Memory) {
+    this._memory = memory;
+  }
+
+  tick() {
+    // Read byte from memory
+    const opcode = this._memory.readByte(this.PC);
+
+    // Increase PC
+    this.PC++;
+
+    // Execute OPCODE
+    this.executeOpcode(opcode);
+  }
+
+  executeOpcode(opcode: u8) {
+    console.log("Opcode", numToHex(opcode));
+
+    switch (opcode) {
+      case 0x00:
+        // NOP
+        break;
+
+      case 0x3e:
+        // LD A,u8
+        this._A = this._memory.readByte(this.PC++);
+        break;
+
+      default:
+        throw new Error("Unknown opcode 0x");
+    }
   }
 }
