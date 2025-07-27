@@ -382,4 +382,55 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.A).toBe(0x7f);
     expect(cpu.HL).toBe(0xc122);
   });
+
+  test("0x22: LD (HL+), A", () => {
+    const cpu = createCPUWithROM([0x22]); // LD (HL+), A
+    cpu.HL = 0xc000;
+    cpu.A = 0xab;
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xc000)).toBe(0xab);
+    expect(cpu.HL).toBe(0xc001);
+  });
+
+  test("0x2A: LD A, (HL+)", () => {
+    const cpu = createCPUWithROM([0x2a]); // LD A, (HL+)
+    cpu.HL = 0xc000;
+    (cpu as any)._memory.writeByte(0xc000, 0x66);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x66);
+    expect(cpu.HL).toBe(0xc001);
+  });
+
+  test("0x32: LD (HL-), A", () => {
+    const cpu = createCPUWithROM([0x32]); // LD (HL-), A
+    cpu.HL = 0xc100;
+    cpu.A = 0x9f;
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xc100)).toBe(0x9f);
+    expect(cpu.HL).toBe(0xc0ff);
+  });
+
+  test("0xE0: LDH (a8), A", () => {
+    const cpu = createCPUWithROM([0xe0, 0x50]); // LDH (0x50), A
+    cpu.A = 0xde;
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xff50)).toBe(0xde);
+  });
+
+  test("0xF0: LDH A, (a8)", () => {
+    const cpu = createCPUWithROM([0xf0, 0x77]); // LDH A, (0x77)
+    (cpu as any)._memory.writeByte(0xff77, 0x33);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x33);
+  });
 });

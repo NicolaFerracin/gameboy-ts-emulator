@@ -292,6 +292,10 @@ export class CPU {
       case 0x20:
       case 0x21:
       case 0x22:
+        // LD (HL+), A
+        this._memory.writeByte(this.HL++, this.A);
+        break;
+
       case 0x23:
       case 0x24:
         // INC H
@@ -316,6 +320,10 @@ export class CPU {
       case 0x28:
       case 0x29:
       case 0x2a:
+        // LD A, (HL+)
+        this.A = this._memory.readByte(this.HL++);
+        break;
+
       case 0x2b:
       case 0x2c:
         // INC L
@@ -340,6 +348,10 @@ export class CPU {
       case 0x30:
       case 0x31:
       case 0x32:
+        // LD (HL-), A
+        this._memory.writeByte(this.HL--, this.A);
+        break;
+
       case 0x33:
       case 0x34:
       case 0x35:
@@ -791,6 +803,13 @@ export class CPU {
       case 0xde:
       case 0xdf:
       case 0xe0:
+        // LD (a8), A
+        this._memory.writeByte(
+          this._memory.readByte(this.PC++) + 0xff00,
+          this.A
+        );
+        break;
+
       case 0xe1:
       case 0xe2:
         // LD (C), A
@@ -818,6 +837,11 @@ export class CPU {
       case 0xee:
       case 0xef:
       case 0xf0:
+        // LD A, (a8)
+        const ld_a_a8 = this._memory.readByte(this.PC++);
+        this.A = this._memory.readByte(0xff00 + ld_a_a8);
+        break;
+
       case 0xf1:
       case 0xf2:
         // LD A, (C)
