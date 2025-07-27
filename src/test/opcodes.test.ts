@@ -123,3 +123,147 @@ describe("Opcode tests: LD r, d8 and LD r1, r2", () => {
     expect(cpu.F & 0b00010000).toBe(0b00010000); // C still on
   });
 });
+
+describe("CPU: INC r", () => {
+  test("INC A: 0x0F -> 0x10", () => {
+    const cpu = createCPUWithROM([0x3c]); // INC A
+    cpu.A = 0x0f;
+    cpu.tick();
+    expect(cpu.A).toBe(0x10);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("INC B: 0xFF -> 0x00", () => {
+    const cpu = createCPUWithROM([0x04]); // INC B
+    cpu.B = 0xff;
+    cpu.tick();
+    expect(cpu.B).toBe(0x00);
+    expect(cpu.Z_FLAG).toBe(true);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("INC C: 0x0F -> 0x10", () => {
+    const cpu = createCPUWithROM([0x0c]); // INC C
+    cpu.C = 0x0f;
+    cpu.tick();
+    expect(cpu.C).toBe(0x10);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("INC D: 0xFE -> 0xFF", () => {
+    const cpu = createCPUWithROM([0x14]); // INC D
+    cpu.D = 0xfe;
+    cpu.tick();
+    expect(cpu.D).toBe(0xff);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("INC E: 0x7F -> 0x80", () => {
+    const cpu = createCPUWithROM([0x1c]); // INC E
+    cpu.E = 0x7f;
+    cpu.tick();
+    expect(cpu.E).toBe(0x80);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("INC H: 0x0F -> 0x10", () => {
+    const cpu = createCPUWithROM([0x24]); // INC H
+    cpu.H = 0x0f;
+    cpu.tick();
+    expect(cpu.H).toBe(0x10);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("INC L: 0xFF -> 0x00", () => {
+    const cpu = createCPUWithROM([0x2c]); // INC L
+    cpu.L = 0xff;
+    cpu.tick();
+    expect(cpu.L).toBe(0x00);
+    expect(cpu.Z_FLAG).toBe(true);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+});
+
+describe("CPU: DEC r", () => {
+  test("DEC A: 0x01 -> 0x00", () => {
+    const cpu = createCPUWithROM([0x3d]); // DEC A
+    cpu.A = 0x01;
+    cpu.tick();
+    expect(cpu.A).toBe(0x00);
+    expect(cpu.Z_FLAG).toBe(true);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("DEC B: 0x10 -> 0x0F", () => {
+    const cpu = createCPUWithROM([0x05]); // DEC B
+    cpu.B = 0x10;
+    cpu.tick();
+    expect(cpu.B).toBe(0x0f);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("DEC C: 0x01 -> 0x00", () => {
+    const cpu = createCPUWithROM([0x0d]); // DEC C
+    cpu.C = 0x01;
+    cpu.tick();
+    expect(cpu.C).toBe(0x00);
+    expect(cpu.Z_FLAG).toBe(true);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("DEC D: 0xF0 -> 0xEF", () => {
+    const cpu = createCPUWithROM([0x15]); // DEC D
+    cpu.D = 0xf0;
+    cpu.tick();
+    expect(cpu.D).toBe(0xef);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("DEC E: 0x00 -> 0xFF", () => {
+    const cpu = createCPUWithROM([0x1d]); // DEC E
+    cpu.E = 0x00;
+    cpu.tick();
+    expect(cpu.E).toBe(0xff);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+
+  test("DEC H: 0x01 -> 0x00", () => {
+    const cpu = createCPUWithROM([0x25]); // DEC H
+    cpu.H = 0x01;
+    cpu.tick();
+    expect(cpu.H).toBe(0x00);
+    expect(cpu.Z_FLAG).toBe(true);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("DEC L: 0x10 -> 0x0F", () => {
+    const cpu = createCPUWithROM([0x2d]); // DEC L
+    cpu.L = 0x10;
+    cpu.tick();
+    expect(cpu.L).toBe(0x0f);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(true);
+    expect(cpu.H_FLAG).toBe(true);
+  });
+});

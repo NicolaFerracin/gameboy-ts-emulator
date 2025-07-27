@@ -188,7 +188,20 @@ export class CPU {
       case 0x02:
       case 0x03:
       case 0x04:
+        // INC B
+        // checks half-carry by checking if the the lower nibble (0-to-3 - resulting from the 0x0f masking)
+        // plus 1 overflows (meaning it carries to the bit at position 4 - the 5th bit)
+        this.H_FLAG = (this.B++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.B === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x05:
+        // DEC B
+        this.H_FLAG = (this.B-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.B === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x06:
         // LD B, d8
@@ -201,7 +214,18 @@ export class CPU {
       case 0x0a:
       case 0x0b:
       case 0x0c:
+        // INC C
+        this.H_FLAG = (this.C++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.C === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x0d:
+        // DEC C
+        this.H_FLAG = (this.C-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.C === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x0e:
         // LD C, d8
@@ -214,7 +238,18 @@ export class CPU {
       case 0x12:
       case 0x13:
       case 0x14:
+        // INC D
+        this.H_FLAG = (this.D++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.D === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x15:
+        // DEC D
+        this.H_FLAG = (this.D-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.D === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x16:
         // LD D, d8
@@ -227,7 +262,18 @@ export class CPU {
       case 0x1a:
       case 0x1b:
       case 0x1c:
+        // INC E
+        this.H_FLAG = (this.E++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.E === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x1d:
+        // DEC E
+        this.H_FLAG = (this.E-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.E === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x1e:
         // LD E, d8
@@ -240,7 +286,18 @@ export class CPU {
       case 0x22:
       case 0x23:
       case 0x24:
+        // INC H
+        this.H_FLAG = (this.H++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.H === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x25:
+        // DEC H
+        this.H_FLAG = (this.H-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.H === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x26:
         // LD H, d8
@@ -253,7 +310,18 @@ export class CPU {
       case 0x2a:
       case 0x2b:
       case 0x2c:
+        // INC L
+        this.H_FLAG = (this.L++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.L === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x2d:
+        // DEC L
+        this.H_FLAG = (this.L-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.L === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x2e:
         // LD L, d8
@@ -274,8 +342,18 @@ export class CPU {
       case 0x3a:
       case 0x3b:
       case 0x3c:
+        // INC A
+        this.H_FLAG = (this.A++ & 0x0f) + 1 > 0x0f;
+        this.Z_FLAG = this.A === 0;
+        this.N_FLAG = false;
+        break;
+
       case 0x3d:
-        this.B = 400;
+        // DEC A
+        this.H_FLAG = (this.A-- & 0x0f) === 0x00;
+        this.Z_FLAG = this.A === 0;
+        this.N_FLAG = true;
+        break;
 
       case 0x3e:
         // LD A, d8
