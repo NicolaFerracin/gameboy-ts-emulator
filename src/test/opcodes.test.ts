@@ -319,4 +319,36 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
 
     expect((cpu as any)._memory.readByte(0x8000)).toBe(0xde);
   });
+
+  test("0x0A: LD A, (BC)", () => {
+    const cpu = createCPUWithROM([0x0a]); // LD A, (BC)
+    cpu.BC = 0x1234;
+    (cpu as any)._memory.writeByte(0x1234, 0xbe);
+    cpu.tick();
+    expect(cpu.A).toBe(0xbe);
+  });
+
+  test("0x1A: LD A, (DE)", () => {
+    const cpu = createCPUWithROM([0x1a]); // LD A, (DE)
+    cpu.DE = 0xabcd;
+    (cpu as any)._memory.writeByte(0xabcd, 0x42);
+    cpu.tick();
+    expect(cpu.A).toBe(0x42);
+  });
+
+  test("0xFA: LD A, (a16)", () => {
+    const cpu = createCPUWithROM([0xfa, 0x00, 0xc0]); // LD A, (0xc000)
+    (cpu as any)._memory.writeByte(0xc000, 0x77);
+    cpu.tick();
+    expect(cpu.A).toBe(0x77);
+  });
+
+  test("0xEA: LD (a16), A", () => {
+    const cpu = createCPUWithROM([0xea, 0x00, 0xc0]); // LD (0xc000), A
+    cpu.A = 0x99;
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xc000)).toBe(0x99);
+  });
 });

@@ -212,6 +212,10 @@ export class CPU {
       case 0x08:
       case 0x09:
       case 0x0a:
+        // LD A, (BC)
+        this.A = this._memory.readByte(this.BC);
+        break;
+
       case 0x0b:
       case 0x0c:
         // INC C
@@ -260,6 +264,10 @@ export class CPU {
       case 0x18:
       case 0x19:
       case 0x1a:
+        // LD A, (DE)
+        this.A = this._memory.readByte(this.DE);
+        break;
+
       case 0x1b:
       case 0x1c:
         // INC E
@@ -781,6 +789,10 @@ export class CPU {
       case 0xe0:
       case 0xe1:
       case 0xe2:
+        // LD (C), A
+        this._memory.writeByte(0xff00 + this.C, this.A);
+        break;
+
       case 0xe3:
       case 0xe4:
       case 0xe5:
@@ -789,6 +801,13 @@ export class CPU {
       case 0xe8:
       case 0xe9:
       case 0xea:
+        // LD(a16), A;
+        const ld_a16_low = this._memory.readByte(this.PC++);
+        const ld_a16_high = this._memory.readByte(this.PC++);
+        const ld_a16_addr = (ld_a16_high << 8) | ld_a16_low;
+        this._memory.writeByte(ld_a16_addr, this.A);
+        break;
+
       case 0xeb:
       case 0xec:
       case 0xed:
@@ -797,6 +816,10 @@ export class CPU {
       case 0xf0:
       case 0xf1:
       case 0xf2:
+        // LD A, (C)
+        this.A = this._memory.readByte(0xff00 + this.C);
+        break;
+
       case 0xf3:
       case 0xf4:
       case 0xf5:
@@ -805,6 +828,13 @@ export class CPU {
       case 0xf8:
       case 0xf9:
       case 0xfa:
+        // LD A, (a16)
+        const ld_a_low = this._memory.readByte(this.PC++);
+        const ld_a_high = this._memory.readByte(this.PC++);
+        const ld_a_addr = (ld_a_high << 8) | ld_a_low;
+        this.A = this._memory.readByte(ld_a_addr);
+        break;
+
       case 0xfb:
       case 0xfc:
       case 0xfd:
