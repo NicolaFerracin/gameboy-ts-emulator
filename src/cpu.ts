@@ -353,6 +353,10 @@ export class CPU {
       case 0x38:
       case 0x39:
       case 0x3a:
+        // LD A, (HL-)
+        this.A = this._memory.readByte(this.HL--);
+        break;
+
       case 0x3b:
       case 0x3c:
         // INC A
