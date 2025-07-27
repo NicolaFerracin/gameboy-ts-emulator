@@ -336,6 +336,11 @@ export class CPU {
       case 0x34:
       case 0x35:
       case 0x36:
+        // LD (HL), d8
+        const value = this._memory.readByte(this.PC++);
+        this._memory.writeByte(this.HL, value);
+        break;
+
       case 0x37:
       case 0x38:
       case 0x39:
@@ -392,6 +397,10 @@ export class CPU {
         break;
 
       case 0x46:
+        // LD B, (HL)
+        this.B = this._memory.readByte(this.HL);
+        break;
+
       case 0x47:
         // LD B, A
         this.B = this.A;
@@ -428,6 +437,10 @@ export class CPU {
         break;
 
       case 0x4e:
+        // LD C, (HL)
+        this.C = this._memory.readByte(this.HL);
+        break;
+
       case 0x4f:
         // LD C, A
         this.C = this.A;
@@ -464,6 +477,10 @@ export class CPU {
         break;
 
       case 0x56:
+        // LD D, (HL)
+        this.D = this._memory.readByte(this.HL);
+        break;
+
       case 0x57:
         // LD D, A
         this.D = this.A;
@@ -500,6 +517,10 @@ export class CPU {
         break;
 
       case 0x5e:
+        // LD E, (HL)
+        this.E = this._memory.readByte(this.HL);
+        break;
+
       case 0x5f:
         // LD E, A
         this.E = this.A;
@@ -536,6 +557,10 @@ export class CPU {
         break;
 
       case 0x66:
+        // LD H, (HL)
+        this.H = this._memory.readByte(this.HL);
+        break;
+
       case 0x67:
         // LD H, A
         this.H = this.A;
@@ -572,19 +597,51 @@ export class CPU {
         break;
 
       case 0x6e:
+        // LD L, (HL)
+        this.L = this._memory.readByte(this.HL);
+        break;
+
       case 0x6f:
         // LD L, A
         this.L = this.A;
         break;
 
       case 0x70:
+        // LD (HL), B
+        this._memory.writeByte(this.HL, this.B);
+        break;
+
       case 0x71:
+        // LD (HL), C
+        this._memory.writeByte(this.HL, this.C);
+        break;
+
       case 0x72:
+        // LD (HL), D
+        this._memory.writeByte(this.HL, this.D);
+        break;
+
       case 0x73:
+        // LD (HL), E
+        this._memory.writeByte(this.HL, this.E);
+        break;
+
       case 0x74:
+        // LD (HL), H
+        this._memory.writeByte(this.HL, this.H);
+        break;
+
       case 0x75:
+        // LD (HL), L
+        this._memory.writeByte(this.HL, this.L);
+        break;
+
       case 0x76:
       case 0x77:
+        // LD (HL), A
+        this._memory.writeByte(this.HL, this.A);
+        break;
+
       case 0x78:
         // LD A, B
         this.A = this.B;
@@ -616,6 +673,10 @@ export class CPU {
         break;
 
       case 0x7e:
+        // LD A, (HL)
+        this.A = this._memory.readByte(this.HL);
+        break;
+
       case 0x7f:
         // LD A, A
         // Effectively a NOP
