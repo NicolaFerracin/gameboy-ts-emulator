@@ -63,7 +63,38 @@ export class CPU {
     return this._F;
   }
   set F(value: number) {
-    this._F = applyMask(value, 0xf0); // F lower 4 bits are always 0
+    this._F = applyMask(value, 0xf0);
+  }
+
+  // F is the flags register. Its low nibble (0-3 bits) is always 0. Its high nibble is a set of 4 flags (ZNHC)
+  // Instead of managing F as a whole, we are going to handle the 4 flags individually and they in turn will update F
+  get Z_FLAG(): boolean {
+    return (this.F & (1 << 7)) !== 0;
+  }
+  set Z_FLAG(value: boolean) {
+    if (value) this.F |= 1 << 7;
+    else this.F &= ~(1 << 7);
+  }
+  get N_FLAG(): boolean {
+    return (this.F & (1 << 6)) !== 0;
+  }
+  set N_FLAG(value: boolean) {
+    if (value) this.F |= 1 << 6;
+    else this.F &= ~(1 << 6);
+  }
+  get H_FLAG(): boolean {
+    return (this.F & (1 << 5)) !== 0;
+  }
+  set H_FLAG(value: boolean) {
+    if (value) this.F |= 1 << 5;
+    else this.F &= ~(1 << 5);
+  }
+  get C_FLAG(): boolean {
+    return (this.F & (1 << 4)) !== 0;
+  }
+  set C_FLAG(value: boolean) {
+    if (value) this.F |= 1 << 4;
+    else this.F &= ~(1 << 4);
   }
 
   get H(): u8 {
@@ -85,8 +116,8 @@ export class CPU {
   }
   set AF(value: number) {
     const [high, low] = u16Unpair(value);
-    this._A = high;
-    this._F = low;
+    this._A = u8Mask(high);
+    this._F = applyMask(low, 0xf0);
   }
 
   get BC(): u16 {
@@ -94,8 +125,8 @@ export class CPU {
   }
   set BC(value: number) {
     const [high, low] = u16Unpair(value);
-    this._B = high;
-    this._C = low;
+    this._B = u8Mask(high);
+    this._C = u8Mask(low);
   }
 
   get DE(): u16 {
@@ -103,8 +134,8 @@ export class CPU {
   }
   set DE(value: number) {
     const [high, low] = u16Unpair(value);
-    this._D = high;
-    this._E = low;
+    this._D = u8Mask(high);
+    this._E = u8Mask(low);
   }
 
   get HL(): u16 {
@@ -112,8 +143,8 @@ export class CPU {
   }
   set HL(value: number) {
     const [high, low] = u16Unpair(value);
-    this._H = high;
-    this._L = low;
+    this._H = u8Mask(high);
+    this._L = u8Mask(low);
   }
 
   get PC(): u16 {
@@ -161,7 +192,7 @@ export class CPU {
 
       case 0x06:
         // LD B, d8
-        this._B = this._memory.readByte(this.PC++);
+        this.B = this._memory.readByte(this.PC++);
         break;
 
       case 0x07:
@@ -174,7 +205,7 @@ export class CPU {
 
       case 0x0e:
         // LD C, d8
-        this._C = this._memory.readByte(this.PC++);
+        this.C = this._memory.readByte(this.PC++);
         break;
 
       case 0x0f:
@@ -187,7 +218,7 @@ export class CPU {
 
       case 0x16:
         // LD D, d8
-        this._D = this._memory.readByte(this.PC++);
+        this.D = this._memory.readByte(this.PC++);
         break;
 
       case 0x17:
@@ -200,7 +231,7 @@ export class CPU {
 
       case 0x1e:
         // LD E, d8
-        this._E = this._memory.readByte(this.PC++);
+        this.E = this._memory.readByte(this.PC++);
         break;
 
       case 0x1f:
@@ -213,7 +244,7 @@ export class CPU {
 
       case 0x26:
         // LD H, d8
-        this._H = this._memory.readByte(this.PC++);
+        this.H = this._memory.readByte(this.PC++);
         break;
 
       case 0x27:
@@ -226,7 +257,7 @@ export class CPU {
 
       case 0x2e:
         // LD L, d8
-        this._L = this._memory.readByte(this.PC++);
+        this.L = this._memory.readByte(this.PC++);
         break;
 
       case 0x2f:
@@ -244,10 +275,11 @@ export class CPU {
       case 0x3b:
       case 0x3c:
       case 0x3d:
+        this.B = 400;
 
       case 0x3e:
         // LD A, d8
-        this._A = this._memory.readByte(this.PC++);
+        this.A = this._memory.readByte(this.PC++);
         break;
 
       case 0x3f:
@@ -258,38 +290,38 @@ export class CPU {
 
       case 0x41:
         // LD B, C
-        this._B = this._C;
+        this.B = this.C;
         break;
 
       case 0x42:
         // LD B, D
-        this._B = this._D;
+        this.B = this.D;
         break;
 
       case 0x43:
         // LD B, E
-        this._B = this._E;
+        this.B = this.E;
         break;
 
       case 0x44:
         // LD B, H
-        this._B = this._H;
+        this.B = this.H;
         break;
 
       case 0x45:
         // LD B, L
-        this._B = this._L;
+        this.B = this.L;
         break;
 
       case 0x46:
       case 0x47:
         // LD B, A
-        this._B = this._A;
+        this.B = this.A;
         break;
 
       case 0x48:
         // LD C, B
-        this._C = this._B;
+        this.C = this.B;
         break;
 
       case 0x49:
@@ -299,38 +331,38 @@ export class CPU {
 
       case 0x4a:
         // LD C, D
-        this._C = this._D;
+        this.C = this.D;
         break;
 
       case 0x4b:
         // LD C, E
-        this._C = this._E;
+        this.C = this.E;
         break;
 
       case 0x4c:
         // LD C, H
-        this._C = this._H;
+        this.C = this.H;
         break;
 
       case 0x4d:
         // LD C, L
-        this._C = this._L;
+        this.C = this.L;
         break;
 
       case 0x4e:
       case 0x4f:
         // LD C, A
-        this._C = this._A;
+        this.C = this.A;
         break;
 
       case 0x50:
         // LD D, B
-        this._D = this._B;
+        this.D = this.B;
         break;
 
       case 0x51:
         // LD D, C
-        this._D = this._C;
+        this.D = this.C;
         break;
 
       case 0x52:
@@ -340,38 +372,38 @@ export class CPU {
 
       case 0x53:
         // LD D, E
-        this._D = this._E;
+        this.D = this.E;
         break;
 
       case 0x54:
         // LD D, H
-        this._D = this._H;
+        this.D = this.H;
         break;
 
       case 0x55:
         // LD D, L
-        this._D = this._L;
+        this.D = this.L;
         break;
 
       case 0x56:
       case 0x57:
         // LD D, A
-        this._D = this._A;
+        this.D = this.A;
         break;
 
       case 0x58:
         // LD E, B
-        this._E = this._B;
+        this.E = this.B;
         break;
 
       case 0x59:
         // LD E, C
-        this._E = this._C;
+        this.E = this.C;
         break;
 
       case 0x5a:
         // LD E, D
-        this._E = this._D;
+        this.E = this.D;
         break;
 
       case 0x5b:
@@ -381,38 +413,38 @@ export class CPU {
 
       case 0x5c:
         // LD E, H
-        this._E = this._H;
+        this.E = this.H;
         break;
 
       case 0x5d:
         // LD E, L
-        this._E = this._L;
+        this.E = this.L;
         break;
 
       case 0x5e:
       case 0x5f:
         // LD E, A
-        this._E = this._A;
+        this.E = this.A;
         break;
 
       case 0x60:
         // LD H, B
-        this._H = this._B;
+        this.H = this.B;
         break;
 
       case 0x61:
         // LD H, C
-        this._H = this._C;
+        this.H = this.C;
         break;
 
       case 0x62:
         // LD H, D
-        this._H = this._D;
+        this.H = this.D;
         break;
 
       case 0x63:
         // LD H, E
-        this._H = this._E;
+        this.H = this.E;
         break;
 
       case 0x64:
@@ -422,38 +454,38 @@ export class CPU {
 
       case 0x65:
         // LD H, L
-        this._H = this._L;
+        this.H = this.L;
         break;
 
       case 0x66:
       case 0x67:
         // LD H, A
-        this._H = this._A;
+        this.H = this.A;
         break;
 
       case 0x68:
         // LD L, B
-        this._L = this._B;
+        this.L = this.B;
         break;
 
       case 0x69:
         // LD L, C
-        this._L = this._C;
+        this.L = this.C;
         break;
 
       case 0x6a:
         // LD L, D
-        this._L = this._D;
+        this.L = this.D;
         break;
 
       case 0x6b:
         // LD L, E
-        this._L = this._E;
+        this.L = this.E;
         break;
 
       case 0x6c:
         // LD L, H
-        this._L = this._H;
+        this.L = this.H;
         break;
 
       case 0x6d:
@@ -464,7 +496,7 @@ export class CPU {
       case 0x6e:
       case 0x6f:
         // LD L, A
-        this._L = this._A;
+        this.L = this.A;
         break;
 
       case 0x70:
@@ -477,32 +509,32 @@ export class CPU {
       case 0x77:
       case 0x78:
         // LD A, B
-        this._A = this._B;
+        this.A = this.B;
         break;
 
       case 0x79:
         // LD A, C
-        this._A = this._C;
+        this.A = this.C;
         break;
 
       case 0x7a:
         // LD A, D
-        this._A = this._D;
+        this.A = this.D;
         break;
 
       case 0x7b:
         // LD A, E
-        this._A = this._E;
+        this.A = this.E;
         break;
 
       case 0x7c:
         // LD A, H
-        this._A = this._H;
+        this.A = this.H;
         break;
 
       case 0x7d:
         // LD A, L
-        this._A = this._L;
+        this.A = this.L;
         break;
 
       case 0x7e:

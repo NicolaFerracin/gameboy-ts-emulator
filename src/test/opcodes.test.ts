@@ -94,4 +94,32 @@ describe("Opcode tests: LD r, d8 and LD r1, r2", () => {
     cpu.tick(); // LD A, A
     expect(cpu.A).toBe(0x55); // should still be 0x55
   });
+
+  test("Flag setters correctly modify F register", () => {
+    const cpu = createCPUWithROM([]);
+
+    cpu.Z_FLAG = true;
+    expect(cpu.F & 0b10000000).toBe(0b10000000);
+
+    cpu.N_FLAG = true;
+    expect(cpu.F & 0b01000000).toBe(0b01000000);
+
+    cpu.H_FLAG = true;
+    expect(cpu.F & 0b00100000).toBe(0b00100000);
+
+    cpu.C_FLAG = true;
+    expect(cpu.F & 0b00010000).toBe(0b00010000);
+
+    // Lower 4 bits should still be 0
+    expect(cpu.F & 0x0f).toBe(0);
+
+    // Turn some off
+    cpu.Z_FLAG = false;
+    cpu.H_FLAG = false;
+
+    expect(cpu.F & 0b10000000).toBe(0); // Z off
+    expect(cpu.F & 0b00100000).toBe(0); // H off
+    expect(cpu.F & 0b01000000).toBe(0b01000000); // N still on
+    expect(cpu.F & 0b00010000).toBe(0b00010000); // C still on
+  });
 });
