@@ -6,6 +6,10 @@ export const applyMask = (value: number, mask: number): number => value & mask;
 export const u8Mask = (value: number): u8 => applyMask(value, 0xff);
 // Ensures a 16bit register gets the proper 16bit value
 export const u16Mask = (value: number): u16 => applyMask(value, 0xffff);
+// Applies the lower nibble mask (00001111) to a value
+export const lowNibbleMask = (value: u8): u8 => applyMask(value, 0x0f);
+// Combines 2 8bit values into a single 16bit value
+export const combineU8 = (low: u8, high: u8) => (high << 8) | low;
 
 // Combines the values of 2 8bit registers into a 16bit value
 export const u8Pair = (high: u8, low: u8): u16 => (high << 8) | low;
