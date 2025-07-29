@@ -433,4 +433,116 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
 
     expect(cpu.A).toBe(0x33);
   });
+
+  test("0x01: LD BC, d16", () => {
+    const cpu = createCPUWithROM([0x01, 0x34, 0x12]); // LD BC, 0x1234
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0x1234);
+  });
+
+  test("0x11: LD DE, d16", () => {
+    const cpu = createCPUWithROM([0x11, 0x78, 0x56]); // LD DE, 0x5678
+
+    cpu.tick();
+
+    expect(cpu.DE).toBe(0x5678);
+  });
+
+  test("0x21: LD HL, d16", () => {
+    const cpu = createCPUWithROM([0x21, 0xbc, 0x9a]); // LD HL, 0x9abc
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x9abc);
+  });
+
+  test("0x31: LD SP, d16", () => {
+    const cpu = createCPUWithROM([0x31, 0xef, 0xcd]); // LD SP, 0xcdef
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xcdef);
+  });
+
+  test("0xF8: LD HL, SP+r8 (positive offset, no carries)", () => {
+    const cpu = createCPUWithROM([0xf8, 0x05]); // LD HL, SP+5
+    cpu.SP = 0xff00; // Low byte 0x00, so 0x00 + 0x05 = 0x05 (no carries)
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0xff05);
+    expect(cpu.SP).toBe(0xff00); // SP should remain unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag should be reset
+    expect(cpu.F & 0x40).toBe(0); // N flag should be reset
+    expect(cpu.F & 0x20).toBe(0); // H flag should be reset (no carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0); // C flag should be reset (no carry from bit 7)
+  });
+
+  test("0xF8: LD HL, SP+r8 (half carry)", () => {
+    const cpu = createCPUWithROM([0xf8, 0x08]); // LD HL, SP+8
+    cpu.SP = 0xff08; // Low byte 0x08, so 0x08 + 0x08 = 0x10 (carry from bit 3)
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0xff10);
+    expect(cpu.SP).toBe(0xff08); // SP should remain unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag should be reset
+    expect(cpu.F & 0x40).toBe(0); // N flag should be reset
+    expect(cpu.F & 0x20).toBe(0x20); // H flag should be set (carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0); // C flag should be reset (no carry from bit 7)
+  });
+
+  test("0xF8: LD HL, SP+r8 (carry)", () => {
+    const cpu = createCPUWithROM([0xf8, 0x80]); // LD HL, SP+(-128)
+    cpu.SP = 0xff80; // Low byte 0x80, so 0x80 + 0x80 = 0x100 (carry from bit 7)
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0xff00); // 0x80 + 0x80 = 0x100, but only low byte kept
+    expect(cpu.SP).toBe(0xff80); // SP should remain unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag should be reset
+    expect(cpu.F & 0x40).toBe(0); // N flag should be reset
+    expect(cpu.F & 0x20).toBe(0); // H flag should be reset
+    expect(cpu.F & 0x10).toBe(0x10); // C flag should be set (carry from bit 7)
+  });
+
+  test("0xF8: LD HL, SP+r8 (negative offset)", () => {
+    const cpu = createCPUWithROM([0xf8, 0xfe]); // LD HL, SP-2 (0xfe = -2 in signed 8-bit)
+    cpu.SP = 0x1002; // Low byte 0x02, so 0x02 + 0xfe = 0x100 (carry from bit 7, underflow)
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1000);
+    expect(cpu.SP).toBe(0x1002); // SP should remain unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag should be reset
+    expect(cpu.F & 0x40).toBe(0); // N flag should be reset
+    expect(cpu.F & 0x20).toBe(0x20); // H flag should be set (borrow from bit 4)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag should be set (borrow from bit 8)
+  });
+
+  test("0xF8: LD HL, SP+r8 (zero offset)", () => {
+    const cpu = createCPUWithROM([0xf8, 0x00]); // LD HL, SP+0
+    cpu.SP = 0x8000;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x8000);
+    expect(cpu.F & 0x80).toBe(0); // Z flag should be reset
+    expect(cpu.F & 0x40).toBe(0); // N flag should be reset
+    expect(cpu.F & 0x20).toBe(0); // H flag should be reset
+    expect(cpu.F & 0x10).toBe(0); // C flag should be reset
+  });
+
+  test("0xF9: LD SP, HL", () => {
+    const cpu = createCPUWithROM([0xf9]); // LD SP, HL
+    cpu.HL = 0xabcd;
+    cpu.SP = 0x1234; // Initial SP value
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xabcd);
+    expect(cpu.HL).toBe(0xabcd); // HL should remain unchanged
+  });
 });

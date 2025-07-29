@@ -2,6 +2,10 @@ import type { Memory } from "./memory";
 import { u16, u8 } from "./types";
 import {
   applyMask,
+  applySign,
+  breakU16,
+  combineU8,
+  lowNibbleMask,
   numToHex,
   u16Mask,
   u16Unpair,
@@ -185,6 +189,13 @@ export class CPU {
         break;
 
       case 0x01:
+        // LD BC, d16
+        this.BC = combineU8(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
+        break;
+
       case 0x02:
       case 0x03:
       case 0x04:
@@ -210,6 +221,13 @@ export class CPU {
 
       case 0x07:
       case 0x08:
+        // LD (a16), SP
+        const ld_a6_addr = this._memory.readByte(this.PC++);
+        const [ld_a6_high, ld_a6_low] = breakU16(this.SP);
+        this._memory.writeByte(ld_a6_addr, ld_a6_low);
+        this._memory.writeByte(u8Mask(ld_a6_addr + 1), ld_a6_high);
+        break;
+
       case 0x09:
       case 0x0a:
         // LD A, (BC)
@@ -239,6 +257,13 @@ export class CPU {
       case 0x0f:
       case 0x10:
       case 0x11:
+        // LD DE, d16
+        this.DE = combineU8(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
+        break;
+
       case 0x12:
       case 0x13:
       case 0x14:
@@ -291,6 +316,13 @@ export class CPU {
       case 0x1f:
       case 0x20:
       case 0x21:
+        // LD HL, d16
+        this.HL = combineU8(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
+        break;
+
       case 0x22:
         // LD (HL+), A
         this._memory.writeByte(this.HL++, this.A);
@@ -347,6 +379,13 @@ export class CPU {
       case 0x2f:
       case 0x30:
       case 0x31:
+        // LD SP, d16
+        this.SP = combineU8(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
+        break;
+
       case 0x32:
         // LD (HL-), A
         this._memory.writeByte(this.HL--, this.A);
@@ -855,7 +894,21 @@ export class CPU {
       case 0xf6:
       case 0xf7:
       case 0xf8:
+        // LD HL, SP+s8
+        const ld_hl_s8 = this._memory.readByte(this.PC++);
+        this.HL = this.SP + applySign(ld_hl_s8); // only when calculating HL we use the signed s8 value
+        this.Z_FLAG = false;
+        this.N_FLAG = false;
+        // SP is 16bit and s8 is 8bit, but for the flag we consider this as a 8 bit operation and we apply appropriate masking
+        this.H_FLAG = lowNibbleMask(this.SP) + lowNibbleMask(ld_hl_s8) > 0x0f;
+        this.C_FLAG = u8Mask(this.SP) + u8Mask(ld_hl_s8) > 0xff;
+        break;
+
       case 0xf9:
+        // LD SP, HL
+        this.SP = this.HL;
+        break;
+
       case 0xfa:
         // LD A, (a16)
         const ld_a_addr = combineU8(
