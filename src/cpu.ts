@@ -809,10 +809,24 @@ export class CPU {
       case 0xbf:
       case 0xc0:
       case 0xc1:
+        // POP BC
+        this.BC = u8Pair(
+          this._memory.readByte(this.SP++),
+          this._memory.readByte(this.SP++)
+        );
+        break;
+
       case 0xc2:
       case 0xc3:
       case 0xc4:
       case 0xc5:
+        // PUSH BC
+        const [push_bc_low, push_bc_high] = u16Unpair(this.BC);
+        console.log({ push_bc_low, push_bc_high });
+        this._memory.writeByte(--this.SP, push_bc_high);
+        this._memory.writeByte(--this.SP, push_bc_low);
+        break;
+
       case 0xc6:
       case 0xc7:
       case 0xc8:
@@ -825,10 +839,23 @@ export class CPU {
       case 0xcf:
       case 0xd0:
       case 0xd1:
+        // POP DE
+        this.DE = u8Pair(
+          this._memory.readByte(this.SP++),
+          this._memory.readByte(this.SP++)
+        );
+        break;
+
       case 0xd2:
       case 0xd3:
       case 0xd4:
       case 0xd5:
+        // PUSH DE
+        const [push_de_low, push_de_high] = u16Unpair(this.DE);
+        this._memory.writeByte(--this.SP, push_de_high);
+        this._memory.writeByte(--this.SP, push_de_low);
+        break;
+
       case 0xd6:
       case 0xd7:
       case 0xd8:
@@ -848,6 +875,13 @@ export class CPU {
         break;
 
       case 0xe1:
+        // POP HL
+        this.HL = u8Pair(
+          this._memory.readByte(this.SP++),
+          this._memory.readByte(this.SP++)
+        );
+        break;
+
       case 0xe2:
         // LD (C), A
         this._memory.writeByte(0xff00 + this.C, this.A);
@@ -856,6 +890,12 @@ export class CPU {
       case 0xe3:
       case 0xe4:
       case 0xe5:
+        // PUSH HL
+        const [push_hl_low, push_hl_high] = u16Unpair(this.HL);
+        this._memory.writeByte(--this.SP, push_hl_high);
+        this._memory.writeByte(--this.SP, push_hl_low);
+        break;
+
       case 0xe6:
       case 0xe7:
       case 0xe8:
@@ -881,6 +921,13 @@ export class CPU {
         break;
 
       case 0xf1:
+        // POP AF
+        this.AF = u8Pair(
+          this._memory.readByte(this.SP++),
+          this._memory.readByte(this.SP++)
+        );
+        break;
+
       case 0xf2:
         // LD A, (C)
         this.A = this._memory.readByte(0xff00 + this.C);
@@ -889,6 +936,12 @@ export class CPU {
       case 0xf3:
       case 0xf4:
       case 0xf5:
+        // PUSH AF
+        const [push_af_low, push_af_high] = u16Unpair(this.AF);
+        this._memory.writeByte(--this.SP, push_af_high);
+        this._memory.writeByte(--this.SP, push_af_low);
+        break;
+
       case 0xf6:
       case 0xf7:
       case 0xf8:

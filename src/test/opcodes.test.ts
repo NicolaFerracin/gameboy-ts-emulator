@@ -545,4 +545,157 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.SP).toBe(0xabcd);
     expect(cpu.HL).toBe(0xabcd); // HL should remain unchanged
   });
+
+  test("0xC1: POP BC", () => {
+    const cpu = createCPUWithROM([0xc1]); // POP BC
+    cpu.SP = 0xc000;
+    // Set up stack data (little-endian: low byte first, then high byte)
+    (cpu as any)._memory.writeByte(0xc000, 0x34); // Low byte of BC
+    (cpu as any)._memory.writeByte(0xc001, 0x12); // High byte of BC
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0x1234);
+    expect(cpu.SP).toBe(0xc002); // SP incremented by 2
+  });
+
+  test("0xD1: POP DE", () => {
+    const cpu = createCPUWithROM([0xd1]); // POP DE
+    cpu.SP = 0xc100;
+    (cpu as any)._memory.writeByte(0xc100, 0x78); // Low byte of DE
+    (cpu as any)._memory.writeByte(0xc101, 0x56); // High byte of DE
+
+    cpu.tick();
+
+    expect(cpu.DE).toBe(0x5678);
+    expect(cpu.SP).toBe(0xc102);
+  });
+
+  test("0xE1: POP HL", () => {
+    const cpu = createCPUWithROM([0xe1]); // POP HL
+    cpu.SP = 0xc200;
+    (cpu as any)._memory.writeByte(0xc200, 0xbc); // Low byte of HL
+    (cpu as any)._memory.writeByte(0xc201, 0x9a); // High byte of HL
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x9abc);
+    expect(cpu.SP).toBe(0xc202);
+  });
+
+  test("0xF1: POP AF", () => {
+    const cpu = createCPUWithROM([0xf1]); // POP AF
+    cpu.SP = 0xc300;
+    (cpu as any)._memory.writeByte(0xc300, 0xf0); // F register (flags)
+    (cpu as any)._memory.writeByte(0xc301, 0xde); // A register
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xde);
+    expect(cpu.F).toBe(0xf0);
+    expect(cpu.AF).toBe(0xdef0);
+    expect(cpu.SP).toBe(0xc302);
+  });
+
+  // PUSH instructions - decrement SP and write to stack
+  test("0xC5: PUSH BC", () => {
+    const cpu = createCPUWithROM([0xc5]); // PUSH BC
+    cpu.SP = 0xc004;
+    cpu.BC = 0x1234;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xc002); // SP decremented by 2
+    expect((cpu as any)._memory.readByte(0xc002)).toBe(0x34); // Low byte
+    expect((cpu as any)._memory.readByte(0xc003)).toBe(0x12); // High byte
+    expect(cpu.BC).toBe(0x1234); // BC unchanged
+  });
+
+  test("0xD5: PUSH DE", () => {
+    const cpu = createCPUWithROM([0xd5]); // PUSH DE
+    cpu.SP = 0xc104;
+    cpu.DE = 0x5678;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xc102);
+    expect((cpu as any)._memory.readByte(0xc102)).toBe(0x78); // Low byte
+    expect((cpu as any)._memory.readByte(0xc103)).toBe(0x56); // High byte
+    expect(cpu.DE).toBe(0x5678); // DE unchanged
+  });
+
+  test("0xE5: PUSH HL", () => {
+    const cpu = createCPUWithROM([0xe5]); // PUSH HL
+    cpu.SP = 0xc204;
+    cpu.HL = 0x9abc;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xc202);
+    expect((cpu as any)._memory.readByte(0xc202)).toBe(0xbc); // Low byte
+    expect((cpu as any)._memory.readByte(0xc203)).toBe(0x9a); // High byte
+    expect(cpu.HL).toBe(0x9abc); // HL unchanged
+  });
+
+  test("0xF5: PUSH AF", () => {
+    const cpu = createCPUWithROM([0xf5]); // PUSH AF
+    cpu.SP = 0xc304;
+    cpu.A = 0xde;
+    cpu.F = 0xf0;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xc302);
+    expect((cpu as any)._memory.readByte(0xc302)).toBe(0xf0); // F register (low byte)
+    expect((cpu as any)._memory.readByte(0xc303)).toBe(0xde); // A register (high byte)
+    expect(cpu.A).toBe(0xde); // A unchanged
+    expect(cpu.F).toBe(0xf0); // F unchanged
+  });
+
+  // Edge case: Stack wrapping
+  test("POP BC with SP at 0xFFFE", () => {
+    const cpu = createCPUWithROM([0xc1]); // POP BC
+    cpu.SP = 0xfffe;
+    (cpu as any)._memory.writeByte(0xfffe, 0xaa);
+    (cpu as any)._memory.writeByte(0xffff, 0xbb);
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0xbbaa);
+    expect(cpu.SP).toBe(0x0000); // Wraps to 0x0000
+  });
+
+  test("PUSH BC with SP at 0x0002", () => {
+    const cpu = createCPUWithROM([0xc5]); // PUSH BC
+    cpu.SP = 0x0002;
+    cpu.BC = 0x1122;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x0000);
+    expect((cpu as any)._memory.readByte(0x0000)).toBe(0x22); // Low byte
+    expect((cpu as any)._memory.readByte(0x0001)).toBe(0x11); // High byte
+  });
+
+  // Test PUSH/POP pair to verify they're inverse operations
+  test("PUSH then POP should restore original value", () => {
+    const cpu = createCPUWithROM([0xc5, 0xc1]); // PUSH BC, POP BC
+    cpu.SP = 0xc100;
+    cpu.BC = 0xdead;
+    const originalSP = cpu.SP;
+
+    // First instruction: PUSH BC
+    cpu.tick();
+    expect(cpu.SP).toBe(originalSP - 2);
+    expect((cpu as any)._memory.readByte(cpu.SP)).toBe(0xad);
+    expect((cpu as any)._memory.readByte(cpu.SP + 1)).toBe(0xde);
+
+    // Modify BC to prove POP restores it
+    cpu.BC = 0x0000;
+
+    // Second instruction: POP BC
+    cpu.tick();
+    expect(cpu.BC).toBe(0xdead); // Restored
+    expect(cpu.SP).toBe(originalSP); // SP back to original
+  });
 });
