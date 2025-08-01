@@ -1172,4 +1172,203 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpuAdd.A).toBe(0x15); // ADD: 0x10 + 0x05 = 0x15
     expect(cpuAdc.A).toBe(0x16); // ADC: 0x10 + 0x05 + 1 = 0x16
   });
+
+  // SUB r - Subtract register from A (0x90-0x97)
+
+  test("0x90: SUB B (no flags except N)", () => {
+    const cpu = createCPUWithROM([0x90]); // SUB B
+    cpu.A = 0x20;
+    cpu.B = 0x10;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10); // 0x20 - 0x10 = 0x10
+    expect(cpu.B).toBe(0x10); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set (always for SUB)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (no full borrow)
+  });
+
+  test("0x91: SUB C (zero result)", () => {
+    const cpu = createCPUWithROM([0x91]); // SUB C
+    cpu.A = 0x15;
+    cpu.C = 0x15;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x15 - 0x15 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result is zero)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x92: SUB D (half borrow)", () => {
+    const cpu = createCPUWithROM([0x92]); // SUB D
+    cpu.A = 0x20;
+    cpu.D = 0x01;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x1f); // 0x20 - 0x01 = 0x1f
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (borrow: 0x0 - 0x1 needs borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x93: SUB E (full borrow)", () => {
+    const cpu = createCPUWithROM([0x93]); // SUB E
+    cpu.A = 0x10;
+    cpu.E = 0x20;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xf0); // 0x10 - 0x20 = -0x10 = 0xf0 (in 8-bit)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0x0 - 0x0 = 0x0, no half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (full borrow: A < E)
+  });
+
+  test("0x94: SUB H (both half and full borrow)", () => {
+    const cpu = createCPUWithROM([0x94]); // SUB H
+    cpu.A = 0x00;
+    cpu.H = 0x01;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x00 - 0x01 = -1 = 0xff
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 - 0x1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (0x00 < 0x01, full borrow)
+  });
+
+  test("0x95: SUB L", () => {
+    const cpu = createCPUWithROM([0x95]); // SUB L
+    cpu.A = 0x3c;
+    cpu.L = 0x12;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x2a); // 0x3c - 0x12 = 0x2a
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0xc - 0x2 = 0xa, no half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (0x3c > 0x12)
+  });
+
+  test("0x96: SUB (HL)", () => {
+    const cpu = createCPUWithROM([0x96]); // SUB (HL)
+    cpu.A = 0x35;
+    cpu.HL = 0xc100;
+    (cpu as any)._memory.writeByte(0xc100, 0x15);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x20); // 0x35 - 0x15 = 0x20
+    expect((cpu as any)._memory.readByte(0xc100)).toBe(0x15); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x97: SUB A (always zero)", () => {
+    const cpu = createCPUWithROM([0x97]); // SUB A
+    cpu.A = 0x42;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // Any value - itself = 0
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (always zero)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow when equal)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (no full borrow when equal)
+  });
+
+  // SUB d8 - Subtract immediate value from A (0xD6)
+
+  test("0xD6: SUB d8 (no flags except N)", () => {
+    const cpu = createCPUWithROM([0xd6, 0x15]); // SUB 0x15
+    cpu.A = 0x35;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x20); // 0x35 - 0x15 = 0x20
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xD6: SUB d8 (zero result)", () => {
+    const cpu = createCPUWithROM([0xd6, 0x50]); // SUB 0x50
+    cpu.A = 0x50;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x50 - 0x50 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xD6: SUB d8 (half borrow)", () => {
+    const cpu = createCPUWithROM([0xd6, 0x08]); // SUB 0x08
+    cpu.A = 0x07;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x07 - 0x08 = -1 = 0xff
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x7 - 0x8 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (0x07 < 0x08, full borrow)
+  });
+
+  test("0xD6: SUB d8 (only half borrow)", () => {
+    const cpu = createCPUWithROM([0xd6, 0x01]); // SUB 0x01
+    cpu.A = 0x10;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x0f); // 0x10 - 0x01 = 0x0f
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 - 0x1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (0x10 > 0x01)
+  });
+
+  // Edge cases
+  test("SUB operations clear previous flags except N", () => {
+    const cpu = createCPUWithROM([0x90]); // SUB B
+    cpu.A = 0x20;
+    cpu.B = 0x10;
+    cpu.F = 0x90; // Z and C flags initially set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10);
+    expect(cpu.F & 0x80).toBe(0); // Z flag cleared
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set (always for SUB)
+    expect(cpu.F & 0x20).toBe(0); // H flag cleared
+    expect(cpu.F & 0x10).toBe(0); // C flag cleared
+  });
+
+  test("SUB with maximum values", () => {
+    const cpu = createCPUWithROM([0xd6, 0xff]); // SUB 0xff
+    cpu.A = 0xff;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0xff - 0xff = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow when equal)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (no full borrow when equal)
+  });
 });

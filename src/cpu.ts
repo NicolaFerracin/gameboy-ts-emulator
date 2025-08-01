@@ -907,13 +907,78 @@ export class CPU {
         break;
 
       case 0x90:
+        // SUB B
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.B) < 0x00;
+        this.C_FLAG = this.A - this.B < 0x00;
+        this.A -= this.B;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x91:
+        // SUB C
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.C) < 0x00;
+        this.C_FLAG = this.A - this.C < 0x00;
+        this.A -= this.C;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x92:
+        // SUB D
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.D) < 0x00;
+        this.C_FLAG = this.A - this.D < 0x00;
+        this.A -= this.D;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x93:
+        // SUB E
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.E) < 0x00;
+        this.C_FLAG = this.A - this.E < 0x00;
+        this.A -= this.E;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x94:
+        // SUB H
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.H) < 0x00;
+        this.C_FLAG = this.A - this.H < 0x00;
+        this.A -= this.H;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x95:
+        // SUB L
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.L) < 0x00;
+        this.C_FLAG = this.A - this.L < 0x00;
+        this.A -= this.L;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x96:
+        // SUB (HL)
+        const sub_hl = this._memory.readByte(this.HL);
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(sub_hl) < 0x00;
+        this.C_FLAG = this.A - sub_hl < 0x00;
+        this.A -= sub_hl;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x97:
+        // SUB A
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.A) < 0x00;
+        this.C_FLAG = this.A - this.A < 0x00;
+        this.A -= this.A;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x98:
       case 0x99:
       case 0x9a:
@@ -1025,6 +1090,15 @@ export class CPU {
         break;
 
       case 0xd6:
+        // SUB d8
+        const sub_d8 = this._memory.readByte(this.PC++);
+        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(sub_d8) < 0x00;
+        this.C_FLAG = this.A - sub_d8 < 0x00;
+        this.A -= sub_d8;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0xd7:
       case 0xd8:
       case 0xd9:
