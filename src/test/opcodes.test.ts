@@ -1371,4 +1371,264 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow when equal)
     expect(cpu.F & 0x10).toBe(0); // C flag clear (no full borrow when equal)
   });
+  // SBC A, r - Subtract register + carry from A (0x98-0x9F)
+
+  test("0x98: SBC A, B (no carry flag set)", () => {
+    const cpu = createCPUWithROM([0x98]); // SBC A, B
+    cpu.A = 0x20;
+    cpu.B = 0x10;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10); // 0x20 - 0x10 - 0 = 0x10
+    expect(cpu.B).toBe(0x10); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set (always for SBC)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x98: SBC A, B (carry flag set)", () => {
+    const cpu = createCPUWithROM([0x98]); // SBC A, B
+    cpu.A = 0x20;
+    cpu.B = 0x10;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x0f); // 0x20 - 0x10 - 1 = 0x0f
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 - 0x0 - 1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x99: SBC A, C (zero result)", () => {
+    const cpu = createCPUWithROM([0x99]); // SBC A, C
+    cpu.A = 0x15;
+    cpu.C = 0x15;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x15 - 0x15 - 0 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x99: SBC A, C (carry makes negative)", () => {
+    const cpu = createCPUWithROM([0x99]); // SBC A, C
+    cpu.A = 0x15;
+    cpu.C = 0x15;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x15 - 0x15 - 1 = -1 = 0xff
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (needs half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (needs full borrow)
+  });
+
+  test("0x9A: SBC A, D (half borrow from carry)", () => {
+    const cpu = createCPUWithROM([0x9a]); // SBC A, D
+    cpu.A = 0x10;
+    cpu.D = 0x00;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x0f); // 0x10 - 0x00 - 1 = 0x0f
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 - 0x0 - 1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x9B: SBC A, E (half borrow from operand)", () => {
+    const cpu = createCPUWithROM([0x9b]); // SBC A, E
+    cpu.A = 0x20;
+    cpu.E = 0x01;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x1f); // 0x20 - 0x01 - 0 = 0x1f
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 - 0x1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x9C: SBC A, H (full borrow)", () => {
+    const cpu = createCPUWithROM([0x9c]); // SBC A, H
+    cpu.A = 0x10;
+    cpu.H = 0x20;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xf0); // 0x10 - 0x20 - 0 = -0x10 = 0xf0
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0x0 - 0x0 = 0x0)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (full borrow needed)
+  });
+
+  test("0x9D: SBC A, L (carry causes extra borrow)", () => {
+    const cpu = createCPUWithROM([0x9d]); // SBC A, L
+    cpu.A = 0x11;
+    cpu.L = 0x10;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x11 - 0x10 - 1 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x00); // H flag set (0x1 - 0x0 - 1 = 0x0, but needs borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x9E: SBC A, (HL) (memory access)", () => {
+    const cpu = createCPUWithROM([0x9e]); // SBC A, (HL)
+    cpu.A = 0x35;
+    cpu.HL = 0xc100;
+    (cpu as any)._memory.writeByte(0xc100, 0x15);
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x1f); // 0x35 - 0x15 - 1 = 0x1f
+    expect((cpu as any)._memory.readByte(0xc100)).toBe(0x15); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x5 - 0x5 - 1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x9F: SBC A, A (with carry clear)", () => {
+    const cpu = createCPUWithROM([0x9f]); // SBC A, A
+    cpu.A = 0x42;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x42 - 0x42 - 0 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x9F: SBC A, A (with carry set)", () => {
+    const cpu = createCPUWithROM([0x9f]); // SBC A, A
+    cpu.A = 0x42;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x42 - 0x42 - 1 = -1 = 0xff
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (needs half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (needs full borrow)
+  });
+
+  // SBC A, d8 - Subtract immediate value + carry from A (0xDE)
+
+  test("0xDE: SBC A, d8 (no carry flag)", () => {
+    const cpu = createCPUWithROM([0xde, 0x15]); // SBC A, 0x15
+    cpu.A = 0x35;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x20); // 0x35 - 0x15 - 0 = 0x20
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xDE: SBC A, d8 (with carry flag)", () => {
+    const cpu = createCPUWithROM([0xde, 0x15]); // SBC A, 0x15
+    cpu.A = 0x35;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x1f); // 0x35 - 0x15 - 1 = 0x1f
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x5 - 0x5 - 1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xDE: SBC A, d8 (triple underflow)", () => {
+    const cpu = createCPUWithROM([0xde, 0xff]); // SBC A, 0xff
+    cpu.A = 0x00;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 - 0xff - 1 = -0x100 = 0x00 (wraps around)
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag clear (0x0 - 0xf - 1: complex case)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (massive underflow)
+  });
+
+  test("0xDE: SBC A, d8 (carry creates zero)", () => {
+    const cpu = createCPUWithROM([0xde, 0x0f]); // SBC A, 0x0f
+    cpu.A = 0x10;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x10 - 0x0f - 1 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 - 0xf - 1 needs half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  // Edge cases and comparisons
+  test("SBC vs SUB comparison", () => {
+    // Same values, but SBC has carry set
+    const cpuSub = createCPUWithROM([0x90]); // SUB B
+    const cpuSbc = createCPUWithROM([0x98]); // SBC A, B
+
+    cpuSub.A = 0x20;
+    cpuSub.B = 0x10;
+    cpuSub.F = 0x10; // Carry set (but SUB ignores it)
+
+    cpuSbc.A = 0x20;
+    cpuSbc.B = 0x10;
+    cpuSbc.F = 0x10; // Carry set (SBC uses it)
+
+    cpuSub.tick();
+    cpuSbc.tick();
+
+    expect(cpuSub.A).toBe(0x10); // SUB: 0x20 - 0x10 = 0x10
+    expect(cpuSbc.A).toBe(0x0f); // SBC: 0x20 - 0x10 - 1 = 0x0f
+  });
+
+  test("SBC extreme underflow", () => {
+    const cpu = createCPUWithROM([0xde, 0x01]); // SBC A, 0x01
+    cpu.A = 0x00;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xfe); // 0x00 - 0x01 - 1 = -2 = 0xfe
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set
+  });
 });

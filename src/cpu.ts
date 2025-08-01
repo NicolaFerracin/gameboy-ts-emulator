@@ -980,13 +980,95 @@ export class CPU {
         break;
 
       case 0x98:
+        // SBC A, B
+        const sbc_a_b_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.B) - sbc_a_b_flag < 0x00;
+        this.C_FLAG = this.A - this.B - sbc_a_b_flag < 0x00;
+        this.A -= this.B + sbc_a_b_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x99:
+        // SBC A, C
+        const sbc_a_c_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.C) - sbc_a_c_flag < 0x00;
+        this.C_FLAG = this.A - this.C - sbc_a_c_flag < 0x00;
+        this.A -= this.C + sbc_a_c_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x9a:
+        // SBC A, D
+        const sbc_a_d_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.D) - sbc_a_d_flag < 0x00;
+        this.C_FLAG = this.A - this.D - sbc_a_d_flag < 0x00;
+        this.A -= this.D + sbc_a_d_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x9b:
+        // SBC A, E
+        const sbc_a_e_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.E) - sbc_a_e_flag < 0x00;
+        this.C_FLAG = this.A - this.E - sbc_a_e_flag < 0x00;
+        this.A -= this.E + sbc_a_e_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x9c:
+        // SBC A, H
+        const sbc_a_h_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.H) - sbc_a_h_flag < 0x00;
+        this.C_FLAG = this.A - this.H - sbc_a_h_flag < 0x00;
+        this.A -= this.H + sbc_a_h_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x9d:
+        // SBC A, L
+        const sbc_a_l_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.L) - sbc_a_l_flag < 0x00;
+        this.C_FLAG = this.A - this.L - sbc_a_l_flag < 0x00;
+        this.A -= this.L + sbc_a_l_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x9e:
+        // SBC A, (HL)
+        const sbc_a_hl_flag = +this.C_FLAG;
+        const sbc_a_hl = this._memory.readByte(this.HL);
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(sbc_a_hl) - sbc_a_hl_flag <
+          0x00;
+        this.C_FLAG = this.A - sbc_a_hl - sbc_a_hl_flag < 0x00;
+        this.A -= sbc_a_hl + sbc_a_hl_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0x9f:
+        // SBC A, A
+        const sbc_a_a_flag = +this.C_FLAG;
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(this.A) - sbc_a_a_flag < 0x00;
+        this.C_FLAG = this.A - this.A - sbc_a_a_flag < 0x00;
+        this.A -= this.A + sbc_a_a_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0xa0:
       case 0xa1:
       case 0xa2:
@@ -1107,6 +1189,18 @@ export class CPU {
       case 0xdc:
       case 0xdd:
       case 0xde:
+        // SBC A, d8
+        const sbc_a_d8_flag = +this.C_FLAG;
+        const sbc_a_d8 = this._memory.readByte(this.PC++);
+        this.H_FLAG =
+          lowNibbleMask(this.A) - lowNibbleMask(sbc_a_d8) - sbc_a_d8_flag <
+          0x00;
+        this.C_FLAG = this.A - sbc_a_d8 - sbc_a_d8_flag < 0x00;
+        this.A -= sbc_a_d8 + sbc_a_d8_flag;
+        this.Z_FLAG = this.A === 0x00;
+        this.N_FLAG = true;
+        break;
+
       case 0xdf:
       case 0xe0:
         // LD (a8), A

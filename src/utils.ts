@@ -20,7 +20,7 @@ export const u8Pair = (low: u8, high: u8): u16 => (high << 8) | low;
 // Breaks a 16bit value into 2 8bit values
 export const u16Unpair = (value: u16): [u8, u8] => [
   u8Mask(value), // low
-  u8Mask(value >> 8), // hight
+  u8Mask(value >> 8), // high
 ];
 
 export const numToHex = (str: number): string =>
