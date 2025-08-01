@@ -925,4 +925,251 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x7f + 0x01 carries from bit 3)
     expect(cpu.F & 0x10).toBe(0); // C flag clear
   });
+
+  // ADC A, r - Add register + carry to A (0x88-0x8F)
+
+  test("0x88: ADC A, B (no carry flag set)", () => {
+    const cpu = createCPUWithROM([0x88]); // ADC A, B
+    cpu.A = 0x10;
+    cpu.B = 0x05;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x15); // 0x10 + 0x05 + 0 = 0x15
+    expect(cpu.B).toBe(0x05); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x88: ADC A, B (carry flag set)", () => {
+    const cpu = createCPUWithROM([0x88]); // ADC A, B
+    cpu.A = 0x10;
+    cpu.B = 0x05;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x16); // 0x10 + 0x05 + 1 = 0x16
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x89: ADC A, C (zero result)", () => {
+    const cpu = createCPUWithROM([0x89]); // ADC A, C
+    cpu.A = 0x00;
+    cpu.C = 0x00;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 + 0x00 + 0 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x89: ADC A, C (carry makes non-zero)", () => {
+    const cpu = createCPUWithROM([0x89]); // ADC A, C
+    cpu.A = 0x00;
+    cpu.C = 0x00;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x01); // 0x00 + 0x00 + 1 = 0x01
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x8A: ADC A, D (half carry from register)", () => {
+    const cpu = createCPUWithROM([0x8a]); // ADC A, D
+    cpu.A = 0x0f;
+    cpu.D = 0x00;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10); // 0x0f + 0x00 + 1 = 0x10
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 3: 0xf + 1)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x8B: ADC A, E (half carry from both)", () => {
+    const cpu = createCPUWithROM([0x8b]); // ADC A, E
+    cpu.A = 0x08;
+    cpu.E = 0x07;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10); // 0x08 + 0x07 + 1 = 0x10
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x8 + 0x7 + 1 = 0x10)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x8C: ADC A, H (full carry)", () => {
+    const cpu = createCPUWithROM([0x8c]); // ADC A, H
+    cpu.A = 0xff;
+    cpu.H = 0x00;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0xff + 0x00 + 1 = 0x100 -> 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set
+  });
+
+  test("0x8D: ADC A, L (both half and full carry)", () => {
+    const cpu = createCPUWithROM([0x8d]); // ADC A, L
+    cpu.A = 0xff;
+    cpu.L = 0xff;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0xff + 0xff + 1 = 0x1ff -> 0xff
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set
+  });
+
+  test("0x8E: ADC A, (HL) (memory access)", () => {
+    const cpu = createCPUWithROM([0x8e]); // ADC A, (HL)
+    cpu.A = 0x20;
+    cpu.HL = 0xc100;
+    (cpu as any)._memory.writeByte(0xc100, 0x15);
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x36); // 0x20 + 0x15 + 1 = 0x36
+    expect((cpu as any)._memory.readByte(0xc100)).toBe(0x15); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x8F: ADC A, A (double A plus carry)", () => {
+    const cpu = createCPUWithROM([0x8f]); // ADC A, A
+    cpu.A = 0x40;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x81); // 0x40 + 0x40 + 1 = 0x81
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x8F: ADC A, A (overflow with carry)", () => {
+    const cpu = createCPUWithROM([0x8f]); // ADC A, A
+    cpu.A = 0x80;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x01); // 0x80 + 0x80 + 1 = 0x101 -> 0x01
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set
+  });
+
+  // ADC A, d8 - Add immediate value + carry to A (0xCE)
+
+  test("0xCE: ADC A, d8 (no carry flag)", () => {
+    const cpu = createCPUWithROM([0xce, 0x25]); // ADC A, 0x25
+    cpu.A = 0x10;
+    cpu.F = 0x00; // Carry flag clear
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x35); // 0x10 + 0x25 + 0 = 0x35
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xCE: ADC A, d8 (with carry flag)", () => {
+    const cpu = createCPUWithROM([0xce, 0x25]); // ADC A, 0x25
+    cpu.A = 0x10;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x36); // 0x10 + 0x25 + 1 = 0x36
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xCE: ADC A, d8 (carry creates half carry)", () => {
+    const cpu = createCPUWithROM([0xce, 0x0e]); // ADC A, 0x0e
+    cpu.A = 0x01;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10); // 0x01 + 0x0e + 1 = 0x10
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x1 + 0xe + 1 = 0x10)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xCE: ADC A, d8 (all three create overflow)", () => {
+    const cpu = createCPUWithROM([0xce, 0xff]); // ADC A, 0xff
+    cpu.A = 0xff;
+    cpu.F = 0x10; // Carry flag set
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0xff + 0xff + 1 = 0x1ff -> 0xff
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set
+  });
+
+  // Edge case: Carry flag influence
+  test("ADC vs ADD comparison", () => {
+    // Same values, but ADC has carry set
+    const cpuAdd = createCPUWithROM([0x80]); // ADD A, B
+    const cpuAdc = createCPUWithROM([0x88]); // ADC A, B
+
+    cpuAdd.A = 0x10;
+    cpuAdd.B = 0x05;
+    cpuAdd.F = 0x10; // Carry set (but ADD ignores it)
+
+    cpuAdc.A = 0x10;
+    cpuAdc.B = 0x05;
+    cpuAdc.F = 0x10; // Carry set (ADC uses it)
+
+    cpuAdd.tick();
+    cpuAdc.tick();
+
+    expect(cpuAdd.A).toBe(0x15); // ADD: 0x10 + 0x05 = 0x15
+    expect(cpuAdc.A).toBe(0x16); // ADC: 0x10 + 0x05 + 1 = 0x16
+  });
 });
