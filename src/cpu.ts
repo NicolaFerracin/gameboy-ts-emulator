@@ -3,8 +3,6 @@ import { u16, u8 } from "./types";
 import {
   applyMask,
   applySign,
-  breakU16,
-  combineU8,
   lowNibbleMask,
   numToHex,
   u16Mask,
@@ -116,37 +114,37 @@ export class CPU {
   }
 
   get AF(): u16 {
-    return u8Pair(this._A, this._F);
+    return u8Pair(this._F, this._A);
   }
   set AF(value: number) {
-    const [high, low] = u16Unpair(value);
+    const [low, high] = u16Unpair(value);
     this._A = u8Mask(high);
     this._F = applyMask(low, 0xf0);
   }
 
   get BC(): u16 {
-    return u8Pair(this._B, this._C);
+    return u8Pair(this._C, this._B);
   }
   set BC(value: number) {
-    const [high, low] = u16Unpair(value);
+    const [low, high] = u16Unpair(value);
     this._B = u8Mask(high);
     this._C = u8Mask(low);
   }
 
   get DE(): u16 {
-    return u8Pair(this._D, this._E);
+    return u8Pair(this._E, this._D);
   }
   set DE(value: number) {
-    const [high, low] = u16Unpair(value);
+    const [low, high] = u16Unpair(value);
     this._D = u8Mask(high);
     this._E = u8Mask(low);
   }
 
   get HL(): u16 {
-    return u8Pair(this._H, this._L);
+    return u8Pair(this._L, this._H);
   }
   set HL(value: number) {
-    const [high, low] = u16Unpair(value);
+    const [low, high] = u16Unpair(value);
     this._H = u8Mask(high);
     this._L = u8Mask(low);
   }
@@ -190,7 +188,7 @@ export class CPU {
 
       case 0x01:
         // LD BC, d16
-        this.BC = combineU8(
+        this.BC = u8Pair(
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
@@ -223,7 +221,7 @@ export class CPU {
       case 0x08:
         // LD (a16), SP
         const ld_a6_addr = this._memory.readByte(this.PC++);
-        const [ld_a6_high, ld_a6_low] = breakU16(this.SP);
+        const [ld_a6_low, ld_a6_high] = u16Unpair(this.SP);
         this._memory.writeByte(ld_a6_addr, ld_a6_low);
         this._memory.writeByte(u8Mask(ld_a6_addr + 1), ld_a6_high);
         break;
@@ -258,7 +256,7 @@ export class CPU {
       case 0x10:
       case 0x11:
         // LD DE, d16
-        this.DE = combineU8(
+        this.DE = u8Pair(
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
@@ -317,7 +315,7 @@ export class CPU {
       case 0x20:
       case 0x21:
         // LD HL, d16
-        this.HL = combineU8(
+        this.HL = u8Pair(
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
@@ -380,7 +378,7 @@ export class CPU {
       case 0x30:
       case 0x31:
         // LD SP, d16
-        this.SP = combineU8(
+        this.SP = u8Pair(
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
@@ -864,7 +862,7 @@ export class CPU {
       case 0xe9:
       case 0xea:
         // LD(a16), A;
-        const ld_a16_addr = combineU8(
+        const ld_a16_addr = u8Pair(
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
@@ -911,7 +909,7 @@ export class CPU {
 
       case 0xfa:
         // LD A, (a16)
-        const ld_a_addr = combineU8(
+        const ld_a_addr = u8Pair(
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );

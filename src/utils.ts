@@ -13,22 +13,14 @@ export const highByteMask = (value: u16): u16 => applyMask(value, 0xff00);
 // Applies the low byte mask (0000000011111111) to a value
 export const lowByteMask = (value: u16): u16 => applyMask(value, 0x00ff);
 
-// Combines 2 8bit values into a single 16bit value
-export const combineU8 = (low: u8, high: u8) => (high << 8) | low;
-// Separate a single 16bit value into 2 8bit values
-export const breakU16 = (value: u16) => [
-  highByteMask(value),
-  lowByteMask(value),
-];
-
 export const applySign = (value: number): number => (value << 24) >> 24;
 
 // Combines the values of 2 8bit registers into a 16bit value
-export const u8Pair = (high: u8, low: u8): u16 => (high << 8) | low;
+export const u8Pair = (low: u8, high: u8): u16 => (high << 8) | low;
 // Breaks a 16bit value into 2 8bit values
 export const u16Unpair = (value: u16): [u8, u8] => [
-  u8Mask(value >> 8),
-  u8Mask(value),
+  u8Mask(value), // low
+  u8Mask(value >> 8), // hight
 ];
 
 export const numToHex = (str: number): string =>
