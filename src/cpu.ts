@@ -745,488 +745,322 @@ export class CPU {
 
       case 0x80:
         // ADD A, B
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.B) > 0x0f;
-        this.C_FLAG = u8Mask(this.A) + u8Mask(this.B) > 0xff;
-        this.A += this.B;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.B);
         break;
 
       case 0x81:
         // ADD A, C
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.C) > 0x0f;
-        this.C_FLAG = u8Mask(this.A) + u8Mask(this.C) > 0xff;
-        this.A += this.C;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.C);
         break;
 
       case 0x82:
         // ADD A, D
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.D) > 0x0f;
-        this.C_FLAG = u8Mask(this.A) + u8Mask(this.D) > 0xff;
-        this.A += this.D;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.D);
         break;
 
       case 0x83:
         // ADD A, E
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.E) > 0x0f;
-        this.C_FLAG = u8Mask(this.A) + u8Mask(this.E) > 0xff;
-        this.A += this.E;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.E);
         break;
 
       case 0x84:
         // ADD A, H
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.H) > 0x0f;
-        this.C_FLAG = u8Mask(this.A) + u8Mask(this.H) > 0xff;
-        this.A += this.H;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.H);
         break;
 
       case 0x85:
         // ADD A, L
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.L) > 0x0f;
-        this.C_FLAG = u8Mask(this.A) + u8Mask(this.L) > 0xff;
-        this.A += this.L;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.L);
         break;
 
       case 0x86:
         // ADD A, (HL)
-        const add_a_hl = this._memory.readByte(this.HL);
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(add_a_hl) > 0x0f;
-        this.C_FLAG = this.A + add_a_hl > 0xff;
-        this.A += add_a_hl;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this._memory.readByte(this.HL));
         break;
 
       case 0x87:
         // ADD A, A
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(this.A) > 0x0f;
-        this.C_FLAG = this.A + this.A > 0xff;
-        this.A += this.A;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.A);
         break;
 
       case 0x88:
         // ADC A, B
-        const adc_a_b_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.B) + adc_a_b_flag > 0x0f;
-        this.C_FLAG = this.A + this.B + adc_a_b_flag > 0xff;
-        this.A += this.B + adc_a_b_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.B, +this.C_FLAG);
         break;
 
       case 0x89:
         // ADC A, C
-        const adc_a_c_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.C) + adc_a_c_flag > 0x0f;
-        this.C_FLAG = this.A + this.C + adc_a_c_flag > 0xff;
-        this.A += this.C + adc_a_c_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.C, +this.C_FLAG);
         break;
 
       case 0x8a:
         // ADC A, D
-        const adc_a_d_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.D) + adc_a_d_flag > 0x0f;
-        this.C_FLAG = this.A + this.D + adc_a_d_flag > 0xff;
-        this.A += this.D + adc_a_d_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.D, +this.C_FLAG);
         break;
 
       case 0x8b:
         // ADC A, E
-        const adc_a_e_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.E) + adc_a_e_flag > 0x0f;
-        this.C_FLAG = this.A + this.E + adc_a_e_flag > 0xff;
-        this.A += this.E + adc_a_e_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.E, +this.C_FLAG);
         break;
 
       case 0x8c:
         // ADC A, H
-        const adc_a_h_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.H) + adc_a_h_flag > 0x0f;
-        this.C_FLAG = this.A + this.H + adc_a_h_flag > 0xff;
-        this.A += this.H + adc_a_h_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.H, +this.C_FLAG);
         break;
 
       case 0x8d:
         // ADC A, L
-        const adc_a_l_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.L) + adc_a_l_flag > 0x0f;
-        this.C_FLAG = this.A + this.L + adc_a_l_flag > 0xff;
-        this.A += this.L + adc_a_l_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.L, +this.C_FLAG);
         break;
 
       case 0x8e:
         // ADC A, (HL)
-        const adc_a_hl_flag = +this.C_FLAG;
-        const adc_a_hl = this._memory.readByte(this.HL);
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(adc_a_hl) + adc_a_hl_flag >
-          0x0f;
-        this.C_FLAG = this.A + adc_a_hl + adc_a_hl_flag > 0xff;
-        this.A += adc_a_hl + adc_a_hl_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this._memory.readByte(this.HL), +this.C_FLAG);
         break;
 
       case 0x8f:
         // ADC A, A
-        const adc_a_a_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(this.A) + adc_a_a_flag > 0x0f;
-        this.C_FLAG = this.A + this.A + adc_a_a_flag > 0xff;
-        this.A += this.A + adc_a_a_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this.A, +this.C_FLAG);
         break;
 
       case 0x90:
         // SUB B
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.B) < 0x00;
-        this.C_FLAG = this.A - this.B < 0x00;
-        this.A -= this.B;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.B);
         break;
 
       case 0x91:
         // SUB C
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.C) < 0x00;
-        this.C_FLAG = this.A - this.C < 0x00;
-        this.A -= this.C;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.C);
         break;
 
       case 0x92:
         // SUB D
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.D) < 0x00;
-        this.C_FLAG = this.A - this.D < 0x00;
-        this.A -= this.D;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.D);
         break;
 
       case 0x93:
         // SUB E
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.E) < 0x00;
-        this.C_FLAG = this.A - this.E < 0x00;
-        this.A -= this.E;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.E);
         break;
 
       case 0x94:
         // SUB H
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.H) < 0x00;
-        this.C_FLAG = this.A - this.H < 0x00;
-        this.A -= this.H;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.H);
         break;
 
       case 0x95:
         // SUB L
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.L) < 0x00;
-        this.C_FLAG = this.A - this.L < 0x00;
-        this.A -= this.L;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.L);
         break;
 
       case 0x96:
         // SUB (HL)
-        const sub_hl = this._memory.readByte(this.HL);
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(sub_hl) < 0x00;
-        this.C_FLAG = this.A - sub_hl < 0x00;
-        this.A -= sub_hl;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this._memory.readByte(this.HL));
         break;
 
       case 0x97:
         // SUB A
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(this.A) < 0x00;
-        this.C_FLAG = this.A - this.A < 0x00;
-        this.A -= this.A;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.A);
         break;
 
       case 0x98:
         // SBC A, B
-        const sbc_a_b_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.B) - sbc_a_b_flag < 0x00;
-        this.C_FLAG = this.A - this.B - sbc_a_b_flag < 0x00;
-        this.A -= this.B + sbc_a_b_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.B, +this.C_FLAG);
         break;
 
       case 0x99:
         // SBC A, C
-        const sbc_a_c_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.C) - sbc_a_c_flag < 0x00;
-        this.C_FLAG = this.A - this.C - sbc_a_c_flag < 0x00;
-        this.A -= this.C + sbc_a_c_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.C, +this.C_FLAG);
         break;
 
       case 0x9a:
         // SBC A, D
-        const sbc_a_d_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.D) - sbc_a_d_flag < 0x00;
-        this.C_FLAG = this.A - this.D - sbc_a_d_flag < 0x00;
-        this.A -= this.D + sbc_a_d_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.D, +this.C_FLAG);
         break;
 
       case 0x9b:
         // SBC A, E
-        const sbc_a_e_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.E) - sbc_a_e_flag < 0x00;
-        this.C_FLAG = this.A - this.E - sbc_a_e_flag < 0x00;
-        this.A -= this.E + sbc_a_e_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.E, +this.C_FLAG);
         break;
 
       case 0x9c:
         // SBC A, H
-        const sbc_a_h_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.H) - sbc_a_h_flag < 0x00;
-        this.C_FLAG = this.A - this.H - sbc_a_h_flag < 0x00;
-        this.A -= this.H + sbc_a_h_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.H, +this.C_FLAG);
         break;
 
       case 0x9d:
         // SBC A, L
-        const sbc_a_l_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.L) - sbc_a_l_flag < 0x00;
-        this.C_FLAG = this.A - this.L - sbc_a_l_flag < 0x00;
-        this.A -= this.L + sbc_a_l_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.L, +this.C_FLAG);
         break;
 
       case 0x9e:
         // SBC A, (HL)
-        const sbc_a_hl_flag = +this.C_FLAG;
-        const sbc_a_hl = this._memory.readByte(this.HL);
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(sbc_a_hl) - sbc_a_hl_flag <
-          0x00;
-        this.C_FLAG = this.A - sbc_a_hl - sbc_a_hl_flag < 0x00;
-        this.A -= sbc_a_hl + sbc_a_hl_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this._memory.readByte(this.HL), +this.C_FLAG);
         break;
 
       case 0x9f:
         // SBC A, A
-        const sbc_a_a_flag = +this.C_FLAG;
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(this.A) - sbc_a_a_flag < 0x00;
-        this.C_FLAG = this.A - this.A - sbc_a_a_flag < 0x00;
-        this.A -= this.A + sbc_a_a_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this.A, +this.C_FLAG);
         break;
 
       case 0xa0:
         // AND B
-        this.executeAnd(this.B);
+        this._u8ExecuteAnd(this.B);
         break;
 
       case 0xa1:
         // AND C
-        this.executeAnd(this.C);
+        this._u8ExecuteAnd(this.C);
         break;
 
       case 0xa2:
         // AND D
-        this.executeAnd(this.D);
+        this._u8ExecuteAnd(this.D);
         break;
 
       case 0xa3:
         // AND E
-        this.executeAnd(this.E);
+        this._u8ExecuteAnd(this.E);
         break;
 
       case 0xa4:
         // AND H
-        this.executeAnd(this.H);
+        this._u8ExecuteAnd(this.H);
         break;
 
       case 0xa5:
         // AND L
-        this.executeAnd(this.L);
+        this._u8ExecuteAnd(this.L);
         break;
 
       case 0xa6:
         // AND (HL)
-        this.executeAnd(this._memory.readByte(this.HL));
+        this._u8ExecuteAnd(this._memory.readByte(this.HL));
         break;
 
       case 0xa7:
         // AND A
-        this.executeAnd(this.A);
+        this._u8ExecuteAnd(this.A);
         break;
 
       case 0xa8:
         // XOR B
-        this.executeXor(this.B);
+        this._u8ExecuteXor(this.B);
         break;
 
       case 0xa9:
         // XOR C
-        this.executeXor(this.C);
+        this._u8ExecuteXor(this.C);
         break;
 
       case 0xaa:
         // XOR D
-        this.executeXor(this.D);
+        this._u8ExecuteXor(this.D);
         break;
 
       case 0xab:
         // XOR E
-        this.executeXor(this.E);
+        this._u8ExecuteXor(this.E);
         break;
 
       case 0xac:
         // XOR H
-        this.executeXor(this.H);
+        this._u8ExecuteXor(this.H);
         break;
 
       case 0xad:
         // XOR L
-        this.executeXor(this.L);
+        this._u8ExecuteXor(this.L);
         break;
 
       case 0xae:
         // XOR (HL)
-        this.executeXor(this._memory.readByte(this.HL));
+        this._u8ExecuteXor(this._memory.readByte(this.HL));
         break;
 
       case 0xaf:
         // XOR A
-        this.executeXor(this.A);
+        this._u8ExecuteXor(this.A);
         break;
 
       case 0xb0:
         // OR B
-        this.executeOr(this.B);
+        this._u8ExecuteOr(this.B);
         break;
 
       case 0xb1:
         // OR C
-        this.executeOr(this.C);
+        this._u8ExecuteOr(this.C);
         break;
 
       case 0xb2:
         // OR D
-        this.executeOr(this.D);
+        this._u8ExecuteOr(this.D);
         break;
 
       case 0xb3:
         // OR E
-        this.executeOr(this.E);
+        this._u8ExecuteOr(this.E);
         break;
 
       case 0xb4:
         // OR H
-        this.executeOr(this.H);
+        this._u8ExecuteOr(this.H);
         break;
 
       case 0xb5:
         // OR L
-        this.executeOr(this.L);
+        this._u8ExecuteOr(this.L);
         break;
 
       case 0xb6:
         // OR (HL)
-        this.executeOr(this._memory.readByte(this.HL));
+        this._u8ExecuteOr(this._memory.readByte(this.HL));
         break;
 
       case 0xb7:
         // OR A
-        this.executeOr(this.A);
+        this._u8ExecuteOr(this.A);
         break;
 
       case 0xb8:
         // CP B
-        this.executeCp(this.B);
+        this._u8ExecuteCp(this.B);
         break;
 
       case 0xb9:
         // CP C
-        this.executeCp(this.C);
+        this._u8ExecuteCp(this.C);
         break;
 
       case 0xba:
         // CP D
-        this.executeCp(this.D);
+        this._u8ExecuteCp(this.D);
         break;
 
       case 0xbb:
         // CP E
-        this.executeCp(this.E);
+        this._u8ExecuteCp(this.E);
         break;
 
       case 0xbc:
         // CP H
-        this.executeCp(this.H);
+        this._u8ExecuteCp(this.H);
         break;
 
       case 0xbd:
         // CP L
-        this.executeCp(this.L);
+        this._u8ExecuteCp(this.L);
         break;
 
       case 0xbe:
         // CP (HL)
-        this.executeCp(this._memory.readByte(this.HL));
+        this._u8ExecuteCp(this._memory.readByte(this.HL));
         break;
 
       case 0xbf:
         // CP A
-        this.executeCp(this.A);
+        this._u8ExecuteCp(this.A);
         break;
 
       case 0xc0:
@@ -1244,19 +1078,13 @@ export class CPU {
       case 0xc5:
         // PUSH BC
         const [push_bc_low, push_bc_high] = u16Unpair(this.BC);
-        console.log({ push_bc_low, push_bc_high });
         this._memory.writeByte(--this.SP, push_bc_high);
         this._memory.writeByte(--this.SP, push_bc_low);
         break;
 
       case 0xc6:
         // ADD A, d8
-        const add_a_d8 = this._memory.readByte(this.PC++);
-        this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(add_a_d8) > 0x0f;
-        this.C_FLAG = this.A + add_a_d8 > 0xff;
-        this.A += add_a_d8;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this._memory.readByte(this.PC++));
         break;
 
       case 0xc7:
@@ -1268,15 +1096,7 @@ export class CPU {
       case 0xcd:
       case 0xce:
         // ADC A, d8
-        const adc_a_d8_flag = +this.C_FLAG;
-        const adc_a_d8 = this._memory.readByte(this.PC++);
-        this.H_FLAG =
-          lowNibbleMask(this.A) + lowNibbleMask(adc_a_d8) + adc_a_d8_flag >
-          0x0f;
-        this.C_FLAG = this.A + adc_a_d8 + adc_a_d8_flag > 0xff;
-        this.A += adc_a_d8 + adc_a_d8_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = false;
+        this._u8ExecuteAdd(this._memory.readByte(this.PC++), +this.C_FLAG);
         break;
 
       case 0xcf:
@@ -1301,12 +1121,7 @@ export class CPU {
 
       case 0xd6:
         // SUB d8
-        const sub_d8 = this._memory.readByte(this.PC++);
-        this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(sub_d8) < 0x00;
-        this.C_FLAG = this.A - sub_d8 < 0x00;
-        this.A -= sub_d8;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this._memory.readByte(this.PC++));
         break;
 
       case 0xd7:
@@ -1318,15 +1133,7 @@ export class CPU {
       case 0xdd:
       case 0xde:
         // SBC A, d8
-        const sbc_a_d8_flag = +this.C_FLAG;
-        const sbc_a_d8 = this._memory.readByte(this.PC++);
-        this.H_FLAG =
-          lowNibbleMask(this.A) - lowNibbleMask(sbc_a_d8) - sbc_a_d8_flag <
-          0x00;
-        this.C_FLAG = this.A - sbc_a_d8 - sbc_a_d8_flag < 0x00;
-        this.A -= sbc_a_d8 + sbc_a_d8_flag;
-        this.Z_FLAG = this.A === 0x00;
-        this.N_FLAG = true;
+        this._u8ExecuteSub(this._memory.readByte(this.PC++), +this.C_FLAG);
         break;
 
       case 0xdf:
@@ -1362,7 +1169,7 @@ export class CPU {
 
       case 0xe6:
         // AND d8
-        this.executeAnd(this._memory.readByte(this.PC++));
+        this._u8ExecuteAnd(this._memory.readByte(this.PC++));
         break;
 
       case 0xe7:
@@ -1382,7 +1189,7 @@ export class CPU {
       case 0xed:
       case 0xee:
         // XOR d8
-        this.executeXor(this._memory.readByte(this.PC++));
+        this._u8ExecuteXor(this._memory.readByte(this.PC++));
         break;
 
       case 0xef:
@@ -1416,7 +1223,7 @@ export class CPU {
 
       case 0xf6:
         // OR d8
-        this.executeOr(this._memory.readByte(this.PC++));
+        this._u8ExecuteOr(this._memory.readByte(this.PC++));
         break;
 
       case 0xf7:
@@ -1450,7 +1257,7 @@ export class CPU {
       case 0xfd:
       case 0xfe:
         // CP d8
-        this.executeCp(this._memory.readByte(this.PC++));
+        this._u8ExecuteCp(this._memory.readByte(this.PC++));
         break;
 
       case 0xff:
@@ -1460,7 +1267,23 @@ export class CPU {
     }
   }
 
-  executeAnd(op: u8) {
+  _u8ExecuteAdd(op: u8, carry: u8 = 0) {
+    this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(op) + carry > 0x0f;
+    this.C_FLAG = this.A + op + carry > 0xff;
+    this.A += op + carry;
+    this.Z_FLAG = this.A === 0x00;
+    this.N_FLAG = false;
+  }
+
+  _u8ExecuteSub(op: u8, carry: u8 = 0) {
+    this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(op) - carry < 0x00;
+    this.C_FLAG = this.A - op - carry < 0x00;
+    this.A -= op + carry;
+    this.Z_FLAG = this.A === 0x00;
+    this.N_FLAG = true;
+  }
+
+  _u8ExecuteAnd(op: u8) {
     this.A = this.A & op;
     this.Z_FLAG = this.A === 0x00;
     this.N_FLAG = false;
@@ -1468,7 +1291,7 @@ export class CPU {
     this.C_FLAG = false;
   }
 
-  executeOr(op: u8) {
+  _u8ExecuteOr(op: u8) {
     this.A = this.A | op;
     this.Z_FLAG = this.A === 0x00;
     this.N_FLAG = false;
@@ -1476,7 +1299,7 @@ export class CPU {
     this.C_FLAG = false;
   }
 
-  executeXor(op: u8) {
+  _u8ExecuteXor(op: u8) {
     this.A = this.A ^ op;
     this.Z_FLAG = this.A === 0x00;
     this.N_FLAG = false;
@@ -1484,7 +1307,7 @@ export class CPU {
     this.C_FLAG = false;
   }
 
-  executeCp(op: u8) {
+  _u8ExecuteCp(op: u8) {
     this.Z_FLAG = this.A === op;
     this.N_FLAG = true;
     this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(op) < 0x00;
