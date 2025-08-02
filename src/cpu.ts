@@ -1070,37 +1070,165 @@ export class CPU {
         break;
 
       case 0xa0:
+        // AND B
+        this.executeAnd(this.B);
+        break;
+
       case 0xa1:
+        // AND C
+        this.executeAnd(this.C);
+        break;
+
       case 0xa2:
+        // AND D
+        this.executeAnd(this.D);
+        break;
+
       case 0xa3:
+        // AND E
+        this.executeAnd(this.E);
+        break;
+
       case 0xa4:
+        // AND H
+        this.executeAnd(this.H);
+        break;
+
       case 0xa5:
+        // AND L
+        this.executeAnd(this.L);
+        break;
+
       case 0xa6:
+        // AND (HL)
+        this.executeAnd(this._memory.readByte(this.HL));
+        break;
+
       case 0xa7:
+        // AND A
+        this.executeAnd(this.A);
+        break;
+
       case 0xa8:
+        // XOR B
+        this.executeXor(this.B);
+        break;
+
       case 0xa9:
+        // XOR C
+        this.executeXor(this.C);
+        break;
+
       case 0xaa:
+        // XOR D
+        this.executeXor(this.D);
+        break;
+
       case 0xab:
+        // XOR E
+        this.executeXor(this.E);
+        break;
+
       case 0xac:
+        // XOR H
+        this.executeXor(this.H);
+        break;
+
       case 0xad:
+        // XOR L
+        this.executeXor(this.L);
+        break;
+
       case 0xae:
+        // XOR (HL)
+        this.executeXor(this._memory.readByte(this.HL));
+        break;
+
       case 0xaf:
+        // XOR A
+        this.executeXor(this.A);
+        break;
+
       case 0xb0:
+        // OR B
+        this.executeOr(this.B);
+        break;
+
       case 0xb1:
+        // OR C
+        this.executeOr(this.C);
+        break;
+
       case 0xb2:
+        // OR D
+        this.executeOr(this.D);
+        break;
+
       case 0xb3:
+        // OR E
+        this.executeOr(this.E);
+        break;
+
       case 0xb4:
+        // OR H
+        this.executeOr(this.H);
+        break;
+
       case 0xb5:
+        // OR L
+        this.executeOr(this.L);
+        break;
+
       case 0xb6:
+        // OR (HL)
+        this.executeOr(this._memory.readByte(this.HL));
+        break;
+
       case 0xb7:
+        // OR A
+        this.executeOr(this.A);
+        break;
+
       case 0xb8:
+        // CP B
+        this.executeCp(this.B);
+        break;
+
       case 0xb9:
+        // CP C
+        this.executeCp(this.C);
+        break;
+
       case 0xba:
+        // CP D
+        this.executeCp(this.D);
+        break;
+
       case 0xbb:
+        // CP E
+        this.executeCp(this.E);
+        break;
+
       case 0xbc:
+        // CP H
+        this.executeCp(this.H);
+        break;
+
       case 0xbd:
+        // CP L
+        this.executeCp(this.L);
+        break;
+
       case 0xbe:
+        // CP (HL)
+        this.executeCp(this._memory.readByte(this.HL));
+        break;
+
       case 0xbf:
+        // CP A
+        this.executeCp(this.A);
+        break;
+
       case 0xc0:
       case 0xc1:
         // POP BC
@@ -1233,6 +1361,10 @@ export class CPU {
         break;
 
       case 0xe6:
+        // AND d8
+        this.executeAnd(this._memory.readByte(this.PC++));
+        break;
+
       case 0xe7:
       case 0xe8:
       case 0xe9:
@@ -1249,6 +1381,10 @@ export class CPU {
       case 0xec:
       case 0xed:
       case 0xee:
+        // XOR d8
+        this.executeXor(this._memory.readByte(this.PC++));
+        break;
+
       case 0xef:
       case 0xf0:
         // LD A, (a8)
@@ -1279,6 +1415,10 @@ export class CPU {
         break;
 
       case 0xf6:
+        // OR d8
+        this.executeOr(this._memory.readByte(this.PC++));
+        break;
+
       case 0xf7:
       case 0xf8:
         // LD HL, SP+s8
@@ -1309,10 +1449,45 @@ export class CPU {
       case 0xfc:
       case 0xfd:
       case 0xfe:
+        // CP d8
+        this.executeCp(this._memory.readByte(this.PC++));
+        break;
+
       case 0xff:
 
       default:
         throw new Error("Unknown opcode 0x");
     }
+  }
+
+  executeAnd(op: u8) {
+    this.A = this.A & op;
+    this.Z_FLAG = this.A === 0x00;
+    this.N_FLAG = false;
+    this.H_FLAG = true;
+    this.C_FLAG = false;
+  }
+
+  executeOr(op: u8) {
+    this.A = this.A | op;
+    this.Z_FLAG = this.A === 0x00;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = false;
+  }
+
+  executeXor(op: u8) {
+    this.A = this.A ^ op;
+    this.Z_FLAG = this.A === 0x00;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = false;
+  }
+
+  executeCp(op: u8) {
+    this.Z_FLAG = this.A === op;
+    this.N_FLAG = true;
+    this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(op) < 0x00;
+    this.C_FLAG = this.A - op < 0x00;
   }
 }

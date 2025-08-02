@@ -1631,4 +1631,854 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.F & 0x20).toBe(0x20); // H flag set
     expect(cpu.F & 0x10).toBe(0x10); // C flag set
   });
+
+  // Test cases for Game Boy AND operations (0xA0-0xA7, 0xE6)
+
+  test("0xA0: AND B", () => {
+    const cpu = createCPUWithROM([0xa0]); // AND B
+    cpu.A = 0x5a;
+    cpu.B = 0x3f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x1a); // 0x5A & 0x3F = 0x1A
+    expect(cpu.B).toBe(0x3f); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (result != 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (always set for AND)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (always clear for AND)
+  });
+
+  test("0xA0: AND B (zero result)", () => {
+    const cpu = createCPUWithROM([0xa0]); // AND B
+    cpu.A = 0x55;
+    cpu.B = 0xaa;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x55 & 0xAA = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA1: AND C", () => {
+    const cpu = createCPUWithROM([0xa1]); // AND C
+    cpu.A = 0xff;
+    cpu.C = 0x0f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x0f); // 0xFF & 0x0F = 0x0F
+    expect(cpu.C).toBe(0x0f); // C unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA2: AND D", () => {
+    const cpu = createCPUWithROM([0xa2]); // AND D
+    cpu.A = 0xf0;
+    cpu.D = 0x33;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x30); // 0xF0 & 0x33 = 0x30
+    expect(cpu.D).toBe(0x33); // D unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA3: AND E", () => {
+    const cpu = createCPUWithROM([0xa3]); // AND E
+    cpu.A = 0x81;
+    cpu.E = 0x7e;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x81 & 0x7E = 0x00
+    expect(cpu.E).toBe(0x7e); // E unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA4: AND H", () => {
+    const cpu = createCPUWithROM([0xa4]); // AND H
+    cpu.A = 0xcc;
+    cpu.H = 0x99;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x88); // 0xCC & 0x99 = 0x88
+    expect(cpu.H).toBe(0x99); // H unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA5: AND L", () => {
+    const cpu = createCPUWithROM([0xa5]); // AND L
+    cpu.A = 0x3c;
+    cpu.L = 0xc3;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x3C & 0xC3 = 0x00
+    expect(cpu.L).toBe(0xc3); // L unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA6: AND (HL)", () => {
+    const cpu = createCPUWithROM([0xa6]); // AND (HL)
+    cpu.A = 0x7f;
+    cpu.HL = 0xc200;
+    (cpu as any)._memory.writeByte(0xc200, 0x1f);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x1f); // 0x7F & 0x1F = 0x1F
+    expect((cpu as any)._memory.readByte(0xc200)).toBe(0x1f); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA7: AND A", () => {
+    const cpu = createCPUWithROM([0xa7]); // AND A
+    cpu.A = 0x42;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x42); // 0x42 & 0x42 = 0x42
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA7: AND A (zero case)", () => {
+    const cpu = createCPUWithROM([0xa7]); // AND A
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 & 0x00 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xE6: AND d8", () => {
+    const cpu = createCPUWithROM([0xe6, 0x0f]); // AND 0x0F
+    cpu.A = 0x5a;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x0a); // 0x5A & 0x0F = 0x0A
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xE6: AND d8 (zero result)", () => {
+    const cpu = createCPUWithROM([0xe6, 0x00]); // AND 0x00
+    cpu.A = 0xff;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0xFF & 0x00 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xE6: AND d8 (all bits set)", () => {
+    const cpu = createCPUWithROM([0xe6, 0xff]); // AND 0xFF
+    cpu.A = 0x96;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x96); // 0x96 & 0xFF = 0x96
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  // Test cases for Game Boy OR operations (0xB0-0xB7, 0xF6)
+
+  test("0xB0: OR B", () => {
+    const cpu = createCPUWithROM([0xb0]); // OR B
+    cpu.A = 0x5a;
+    cpu.B = 0x3f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x7f); // 0x5A | 0x3F = 0x7F
+    expect(cpu.B).toBe(0x3f); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (result != 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (always clear for OR)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (always clear for OR)
+  });
+
+  test("0xB0: OR B (zero result)", () => {
+    const cpu = createCPUWithROM([0xb0]); // OR B
+    cpu.A = 0x00;
+    cpu.B = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 | 0x00 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB1: OR C", () => {
+    const cpu = createCPUWithROM([0xb1]); // OR C
+    cpu.A = 0xf0;
+    cpu.C = 0x0f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0xF0 | 0x0F = 0xFF
+    expect(cpu.C).toBe(0x0f); // C unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB2: OR D", () => {
+    const cpu = createCPUWithROM([0xb2]); // OR D
+    cpu.A = 0x33;
+    cpu.D = 0xcc;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x33 | 0xCC = 0xFF
+    expect(cpu.D).toBe(0xcc); // D unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB3: OR E", () => {
+    const cpu = createCPUWithROM([0xb3]); // OR E
+    cpu.A = 0x81;
+    cpu.E = 0x7e;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x81 | 0x7E = 0xFF
+    expect(cpu.E).toBe(0x7e); // E unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB4: OR H", () => {
+    const cpu = createCPUWithROM([0xb4]); // OR H
+    cpu.A = 0x0c;
+    cpu.H = 0x30;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x3c); // 0x0C | 0x30 = 0x3C
+    expect(cpu.H).toBe(0x30); // H unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB5: OR L", () => {
+    const cpu = createCPUWithROM([0xb5]); // OR L
+    cpu.A = 0x55;
+    cpu.L = 0xaa;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x55 | 0xAA = 0xFF
+    expect(cpu.L).toBe(0xaa); // L unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB6: OR (HL)", () => {
+    const cpu = createCPUWithROM([0xb6]); // OR (HL)
+    cpu.A = 0x7f;
+    cpu.HL = 0xc300;
+    (cpu as any)._memory.writeByte(0xc300, 0x80);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x7F | 0x80 = 0xFF
+    expect((cpu as any)._memory.readByte(0xc300)).toBe(0x80); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB6: OR (HL) (zero result)", () => {
+    const cpu = createCPUWithROM([0xb6]); // OR (HL)
+    cpu.A = 0x00;
+    cpu.HL = 0xc300;
+    (cpu as any)._memory.writeByte(0xc300, 0x00);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 | 0x00 = 0x00
+    expect((cpu as any)._memory.readByte(0xc300)).toBe(0x00); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB7: OR A", () => {
+    const cpu = createCPUWithROM([0xb7]); // OR A
+    cpu.A = 0x42;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x42); // 0x42 | 0x42 = 0x42
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB7: OR A (zero case)", () => {
+    const cpu = createCPUWithROM([0xb7]); // OR A
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 | 0x00 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xF6: OR d8", () => {
+    const cpu = createCPUWithROM([0xf6, 0x0f]); // OR 0x0F
+    cpu.A = 0x50;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x5f); // 0x50 | 0x0F = 0x5F
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xF6: OR d8 (zero result)", () => {
+    const cpu = createCPUWithROM([0xf6, 0x00]); // OR 0x00
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 | 0x00 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xF6: OR d8 (all bits set)", () => {
+    const cpu = createCPUWithROM([0xf6, 0xff]); // OR 0xFF
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x00 | 0xFF = 0xFF
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xF6: OR d8 (idempotent)", () => {
+    const cpu = createCPUWithROM([0xf6, 0x96]); // OR 0x96
+    cpu.A = 0x96;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x96); // 0x96 | 0x96 = 0x96
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  // Test cases for Game Boy XOR operations (0xA8-0xAF, 0xEE)
+
+  test("0xA8: XOR B", () => {
+    const cpu = createCPUWithROM([0xa8]); // XOR B
+    cpu.A = 0x5a;
+    cpu.B = 0x3f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x65); // 0x5A ^ 0x3F = 0x65
+    expect(cpu.B).toBe(0x3f); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (result != 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (always clear for XOR)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (always clear for XOR)
+  });
+
+  test("0xA8: XOR B (zero result)", () => {
+    const cpu = createCPUWithROM([0xa8]); // XOR B
+    cpu.A = 0x55;
+    cpu.B = 0x55;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x55 ^ 0x55 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xA9: XOR C", () => {
+    const cpu = createCPUWithROM([0xa9]); // XOR C
+    cpu.A = 0xf0;
+    cpu.C = 0x0f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0xF0 ^ 0x0F = 0xFF
+    expect(cpu.C).toBe(0x0f); // C unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAA: XOR D", () => {
+    const cpu = createCPUWithROM([0xaa]); // XOR D
+    cpu.A = 0x33;
+    cpu.D = 0xcc;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x33 ^ 0xCC = 0xFF
+    expect(cpu.D).toBe(0xcc); // D unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAB: XOR E", () => {
+    const cpu = createCPUWithROM([0xab]); // XOR E
+    cpu.A = 0x81;
+    cpu.E = 0x7e;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x81 ^ 0x7E = 0xFF
+    expect(cpu.E).toBe(0x7e); // E unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAC: XOR H", () => {
+    const cpu = createCPUWithROM([0xac]); // XOR H
+    cpu.A = 0x0c;
+    cpu.H = 0x30;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x3c); // 0x0C ^ 0x30 = 0x3C
+    expect(cpu.H).toBe(0x30); // H unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAD: XOR L", () => {
+    const cpu = createCPUWithROM([0xad]); // XOR L
+    cpu.A = 0x55;
+    cpu.L = 0xaa;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x55 ^ 0xAA = 0xFF
+    expect(cpu.L).toBe(0xaa); // L unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAE: XOR (HL)", () => {
+    const cpu = createCPUWithROM([0xae]); // XOR (HL)
+    cpu.A = 0x7f;
+    cpu.HL = 0xc400;
+    (cpu as any)._memory.writeByte(0xc400, 0x80);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x7F ^ 0x80 = 0xFF
+    expect((cpu as any)._memory.readByte(0xc400)).toBe(0x80); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAE: XOR (HL) (zero result)", () => {
+    const cpu = createCPUWithROM([0xae]); // XOR (HL)
+    cpu.A = 0x42;
+    cpu.HL = 0xc400;
+    (cpu as any)._memory.writeByte(0xc400, 0x42);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x42 ^ 0x42 = 0x00
+    expect((cpu as any)._memory.readByte(0xc400)).toBe(0x42); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAF: XOR A", () => {
+    const cpu = createCPUWithROM([0xaf]); // XOR A
+    cpu.A = 0x42;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x42 ^ 0x42 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result always 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xAF: XOR A (already zero)", () => {
+    const cpu = createCPUWithROM([0xaf]); // XOR A
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x00 ^ 0x00 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result always 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xEE: XOR d8", () => {
+    const cpu = createCPUWithROM([0xee, 0x0f]); // XOR 0x0F
+    cpu.A = 0x50;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x5f); // 0x50 ^ 0x0F = 0x5F
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xEE: XOR d8 (zero result)", () => {
+    const cpu = createCPUWithROM([0xee, 0x96]); // XOR 0x96
+    cpu.A = 0x96;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // 0x96 ^ 0x96 = 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xEE: XOR d8 (all bits flip)", () => {
+    const cpu = createCPUWithROM([0xee, 0xff]); // XOR 0xFF
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0x00 ^ 0xFF = 0xFF
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xEE: XOR d8 (bit toggle)", () => {
+    const cpu = createCPUWithROM([0xee, 0x55]); // XOR 0x55
+    cpu.A = 0xaa;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // 0xAA ^ 0x55 = 0xFF
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+  // Test cases for Game Boy CP (compare) operations (0xB8-0xBF, 0xFE)
+
+  test("0xB8: CP B (A > B)", () => {
+    const cpu = createCPUWithROM([0xb8]); // CP B
+    cpu.A = 0x35;
+    cpu.B = 0x15;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x35); // A unchanged
+    expect(cpu.B).toBe(0x15); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (A != B)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set (subtraction operation)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (no borrow)
+  });
+
+  test("0xB8: CP B (A == B)", () => {
+    const cpu = createCPUWithROM([0xb8]); // CP B
+    cpu.A = 0x42;
+    cpu.B = 0x42;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x42); // A unchanged
+    expect(cpu.B).toBe(0x42); // B unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (A == B)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xB8: CP B (A < B)", () => {
+    const cpu = createCPUWithROM([0xb8]); // CP B
+    cpu.A = 0x15;
+    cpu.B = 0x35;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x15); // A unchanged
+    expect(cpu.B).toBe(0x35); // B unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (A != B)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow: 0x5 >= 0x5)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow occurred)
+  });
+
+  test("0xB9: CP C", () => {
+    const cpu = createCPUWithROM([0xb9]); // CP C
+    cpu.A = 0xff;
+    cpu.C = 0x01;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // A unchanged
+    expect(cpu.C).toBe(0x01); // C unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xBA: CP D", () => {
+    const cpu = createCPUWithROM([0xba]); // CP D
+    cpu.A = 0x10;
+    cpu.D = 0x20;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x10); // A unchanged
+    expect(cpu.D).toBe(0x20); // D unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0x0 >= 0x0, no half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow)
+  });
+
+  test("0xBB: CP E", () => {
+    const cpu = createCPUWithROM([0xbb]); // CP E
+    cpu.A = 0x80;
+    cpu.E = 0x7f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x80); // A unchanged
+    expect(cpu.E).toBe(0x7f); // E unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xBC: CP H", () => {
+    const cpu = createCPUWithROM([0xbc]); // CP H
+    cpu.A = 0x20;
+    cpu.H = 0x21;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x20); // A unchanged
+    expect(cpu.H).toBe(0x21); // H unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x0 < 0x1, half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow)
+  });
+
+  test("0xBD: CP L", () => {
+    const cpu = createCPUWithROM([0xbd]); // CP L
+    cpu.A = 0x00;
+    cpu.L = 0x01;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // A unchanged
+    expect(cpu.L).toBe(0x01); // L unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow)
+  });
+
+  test("0xBE: CP (HL)", () => {
+    const cpu = createCPUWithROM([0xbe]); // CP (HL)
+    cpu.A = 0x50;
+    cpu.HL = 0xc500;
+    (cpu as any)._memory.writeByte(0xc500, 0x30);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x50); // A unchanged
+    expect((cpu as any)._memory.readByte(0xc500)).toBe(0x30); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xBE: CP (HL) (equal values)", () => {
+    const cpu = createCPUWithROM([0xbe]); // CP (HL)
+    cpu.A = 0x88;
+    cpu.HL = 0xc500;
+    (cpu as any)._memory.writeByte(0xc500, 0x88);
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x88); // A unchanged
+    expect((cpu as any)._memory.readByte(0xc500)).toBe(0x88); // Memory unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (equal)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xBF: CP A", () => {
+    const cpu = createCPUWithROM([0xbf]); // CP A
+    cpu.A = 0x96;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x96); // A unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (always equal to itself)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xFE: CP d8 (A > immediate)", () => {
+    const cpu = createCPUWithROM([0xfe, 0x30]); // CP 0x30
+    cpu.A = 0x50;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x50); // A unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xFE: CP d8 (A == immediate)", () => {
+    const cpu = createCPUWithROM([0xfe, 0x42]); // CP 0x42
+    cpu.A = 0x42;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x42); // A unchanged
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (equal)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xFE: CP d8 (A < immediate)", () => {
+    const cpu = createCPUWithROM([0xfe, 0x80]); // CP 0x80
+    cpu.A = 0x7f;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x7f); // A unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x0); // H flag set (half borrow)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow)
+  });
+
+  test("0xFE: CP d8 (half borrow test)", () => {
+    const cpu = createCPUWithROM([0xfe, 0x01]); // CP 0x01
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // A unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (half borrow from bit 4)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow occurred)
+  });
+
+  test("0xFE: CP d8 (no borrow)", () => {
+    const cpu = createCPUWithROM([0xfe, 0x00]); // CP 0x00
+    cpu.A = 0xff;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xff); // A unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (no borrow)
+  });
 });

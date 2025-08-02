@@ -25,3 +25,5 @@ export const u16Unpair = (value: u16): [u8, u8] => [
 
 export const numToHex = (str: number): string =>
   str.toString(16).padStart(2, "0");
+
+export const dec2bin = (dec: number): string => (dec >>> 0).toString(2);
