@@ -2481,4 +2481,434 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.F & 0x20).toBe(0); // H flag clear (no half borrow)
     expect(cpu.F & 0x10).toBe(0); // C flag clear (no borrow)
   });
+
+  // Test cases for Game Boy 16-bit ADD HL operations (0x09, 0x19, 0x29, 0x39)
+
+  test("0x09: ADD HL,BC", () => {
+    const cpu = createCPUWithROM([0x09]); // ADD HL,BC
+    cpu.HL = 0x1234;
+    cpu.BC = 0x0567;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x179b); // 0x1234 + 0x0567 = 0x179B
+    expect(cpu.BC).toBe(0x0567); // BC unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag unchanged (not affected by 16-bit ADD)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (no half carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (no carry from bit 15)
+  });
+
+  test("0x09: ADD HL,BC (half carry)", () => {
+    const cpu = createCPUWithROM([0x09]); // ADD HL,BC
+    cpu.HL = 0x0fff;
+    cpu.BC = 0x0001;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1000); // 0x0FFF + 0x0001 = 0x1000
+    expect(cpu.BC).toBe(0x0001); // BC unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 11 to bit 12)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x09: ADD HL,BC (carry)", () => {
+    const cpu = createCPUWithROM([0x09]); // ADD HL,BC
+    cpu.HL = 0xffff;
+    cpu.BC = 0x0001;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x0000); // 0xFFFF + 0x0001 = 0x0000 (overflow)
+    expect(cpu.BC).toBe(0x0001); // BC unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (carry from bit 15)
+  });
+
+  test("0x19: ADD HL,DE", () => {
+    const cpu = createCPUWithROM([0x19]); // ADD HL,DE
+    cpu.HL = 0x2000;
+    cpu.DE = 0x1500;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x3500); // 0x2000 + 0x1500 = 0x3500
+    expect(cpu.DE).toBe(0x1500); // DE unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x19: ADD HL,DE (half carry)", () => {
+    const cpu = createCPUWithROM([0x19]); // ADD HL,DE
+    cpu.HL = 0x0800;
+    cpu.DE = 0x0800;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1000); // 0x0800 + 0x0800 = 0x1000
+    expect(cpu.DE).toBe(0x0800); // DE unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x19: ADD HL,DE (carry)", () => {
+    const cpu = createCPUWithROM([0x19]); // ADD HL,DE
+    cpu.HL = 0x8000;
+    cpu.DE = 0x8000;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x0000); // 0x8000 + 0x8000 = 0x0000 (overflow)
+    expect(cpu.DE).toBe(0x8000); // DE unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (carry from bit 15)
+  });
+
+  test("0x29: ADD HL,HL", () => {
+    const cpu = createCPUWithROM([0x29]); // ADD HL,HL (double HL)
+    cpu.HL = 0x1234;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x2468); // 0x1234 + 0x1234 = 0x2468
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x29: ADD HL,HL (half carry)", () => {
+    const cpu = createCPUWithROM([0x29]); // ADD HL,HL
+    cpu.HL = 0x0900;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1200); // 0x0900 + 0x0900 = 0x1200
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x29: ADD HL,HL (carry)", () => {
+    const cpu = createCPUWithROM([0x29]); // ADD HL,HL
+    cpu.HL = 0x9000;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x2000); // 0x9000 + 0x9000 = 0x12000 -> 0x2000 (overflow)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (carry from bit 15)
+  });
+
+  test("0x39: ADD HL,SP", () => {
+    const cpu = createCPUWithROM([0x39]); // ADD HL,SP
+    cpu.HL = 0x3000;
+    cpu.SP = 0x1000;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x4000); // 0x3000 + 0x1000 = 0x4000
+    expect(cpu.SP).toBe(0x1000); // SP unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x39: ADD HL,SP (half carry)", () => {
+    const cpu = createCPUWithROM([0x39]); // ADD HL,SP
+    cpu.HL = 0x0fff;
+    cpu.SP = 0x0001;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1000); // 0x0FFF + 0x0001 = 0x1000
+    expect(cpu.SP).toBe(0x0001); // SP unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x39: ADD HL,SP (carry)", () => {
+    const cpu = createCPUWithROM([0x39]); // ADD HL,SP
+    cpu.HL = 0xfffe;
+    cpu.SP = 0x0002;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x0000); // 0xFFFE + 0x0002 = 0x10000 -> 0x0000 (overflow)
+    expect(cpu.SP).toBe(0x0002); // SP unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (carry from bit 15)
+  });
+
+  test("0x39: ADD HL,SP (zero result)", () => {
+    const cpu = createCPUWithROM([0x39]); // ADD HL,SP
+    cpu.HL = 0x0000;
+    cpu.SP = 0x0000;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x0000); // 0x0000 + 0x0000 = 0x0000
+    expect(cpu.SP).toBe(0x0000); // SP unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x09: ADD HL,BC (Z flag preservation)", () => {
+    const cpu = createCPUWithROM([0x09]); // ADD HL,BC
+    cpu.HL = 0x1000;
+    cpu.BC = 0x2000;
+    cpu.F = 0x80; // Set Z flag initially
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x3000); // 0x1000 + 0x2000 = 0x3000
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved (not affected by 16-bit ADD)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x19: ADD HL,DE (complex half carry)", () => {
+    const cpu = createCPUWithROM([0x19]); // ADD HL,DE
+    cpu.HL = 0x0abc;
+    cpu.DE = 0x0567;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1023); // 0x0ABC + 0x0567 = 0x1023
+    expect(cpu.DE).toBe(0x0567); // DE unchanged
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0xABC + 0x567 = carry from bit 11)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  // Test cases for Game Boy 16-bit operations (0xE8, INC rr, DEC rr)
+
+  // ADD SP,r8 (0xE8) - flags based on 8-bit arithmetic of SP low byte + immediate
+  test("0xE8: ADD SP,r8 (positive immediate)", () => {
+    const cpu = createCPUWithROM([0xe8, 0x05]); // ADD SP,+5
+    cpu.SP = 0x1234;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x1239); // 0x1234 + 5 = 0x1239
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (always clear for ADD SP,r8)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear (always clear for ADD SP,r8)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0x4 + 0x5 = 0x9, no carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (0x34 + 0x05 = 0x39, no carry from bit 7)
+  });
+
+  test("0xE8: ADD SP,r8 (negative immediate)", () => {
+    const cpu = createCPUWithROM([0xe8, 0xfe]); // ADD SP,-2 (0xFE = -2 in signed 8-bit)
+    cpu.SP = 0x1234;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x1232); // 0x1234 + (-2) = 0x1232
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0x4 + 0xE = 0x12, carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (0x34 + 0xFE = 0x132, carry from bit 7)
+  });
+
+  test("0xE8: ADD SP,r8 (actual carry scenario)", () => {
+    const cpu = createCPUWithROM([0xe8, 0x01]); // ADD SP,+1
+    cpu.SP = 0x12ff;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x1300); // 0x12FF + 1 = 0x1300
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0x20); // H flag set (0xF + 0x1 = 0x10, carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (0xFF + 0x01 = 0x100, carry from bit 7)
+  });
+
+  test("0xE8: ADD SP,r8 (zero immediate)", () => {
+    const cpu = createCPUWithROM([0xe8, 0x00]); // ADD SP,0
+    cpu.SP = 0x5678;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x5678); // 0x5678 + 0 = 0x5678
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0xE8: ADD SP,r8 (maximum negative)", () => {
+    const cpu = createCPUWithROM([0xe8, 0x80]); // ADD SP,-128 (0x80 = -128 in signed 8-bit)
+    cpu.SP = 0x1280;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x1200); // 0x1280 + (-128) = 0x1200
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0x0 + 0x0 = 0x0, no carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (0x80 + 0x80 = 0x100, carry from bit 7)
+  });
+
+  // INC rr operations (0x03, 0x13, 0x23, 0x33) - no flags affected
+  test("0x03: INC BC", () => {
+    const cpu = createCPUWithROM([0x03]); // INC BC
+    cpu.BC = 0x1234;
+    cpu.F = 0xf0; // Set all flags initially
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0x1235); // 0x1234 + 1 = 0x1235
+    expect(cpu.F).toBe(0xf0); // All flags unchanged (INC rr doesn't affect flags)
+  });
+
+  test("0x03: INC BC (overflow)", () => {
+    const cpu = createCPUWithROM([0x03]); // INC BC
+    cpu.BC = 0xffff;
+    cpu.F = 0x00; // Clear all flags initially
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0x0000); // 0xFFFF + 1 = 0x0000 (wrap around)
+    expect(cpu.F).toBe(0x00); // All flags unchanged
+  });
+
+  test("0x13: INC DE", () => {
+    const cpu = createCPUWithROM([0x13]); // INC DE
+    cpu.DE = 0xabcd;
+
+    cpu.tick();
+
+    expect(cpu.DE).toBe(0xabce); // 0xABCD + 1 = 0xABCE
+  });
+
+  test("0x23: INC HL", () => {
+    const cpu = createCPUWithROM([0x23]); // INC HL
+    cpu.HL = 0x00ff;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x0100); // 0x00FF + 1 = 0x0100
+  });
+
+  test("0x33: INC SP", () => {
+    const cpu = createCPUWithROM([0x33]); // INC SP
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xffff); // 0xFFFE + 1 = 0xFFFF
+  });
+
+  test("0x33: INC SP (wrap around)", () => {
+    const cpu = createCPUWithROM([0x33]); // INC SP
+    cpu.SP = 0xffff;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x0000); // 0xFFFF + 1 = 0x0000 (wrap around)
+  });
+
+  // DEC rr operations (0x0B, 0x1B, 0x2B, 0x3B) - no flags affected
+  test("0x0B: DEC BC", () => {
+    const cpu = createCPUWithROM([0x0b]); // DEC BC
+    cpu.BC = 0x1234;
+    cpu.F = 0xf0; // Set all flags initially
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0x1233); // 0x1234 - 1 = 0x1233
+    expect(cpu.F).toBe(0xf0); // All flags unchanged (DEC rr doesn't affect flags)
+  });
+
+  test("0x0B: DEC BC (underflow)", () => {
+    const cpu = createCPUWithROM([0x0b]); // DEC BC
+    cpu.BC = 0x0000;
+    cpu.F = 0x00; // Clear all flags initially
+
+    cpu.tick();
+
+    expect(cpu.BC).toBe(0xffff); // 0x0000 - 1 = 0xFFFF (wrap around)
+    expect(cpu.F).toBe(0x00); // All flags unchanged
+  });
+
+  test("0x1B: DEC DE", () => {
+    const cpu = createCPUWithROM([0x1b]); // DEC DE
+    cpu.DE = 0xabcd;
+
+    cpu.tick();
+
+    expect(cpu.DE).toBe(0xabcc); // 0xABCD - 1 = 0xABCC
+  });
+
+  test("0x2B: DEC HL", () => {
+    const cpu = createCPUWithROM([0x2b]); // DEC HL
+    cpu.HL = 0x0100;
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x00ff); // 0x0100 - 1 = 0x00FF
+  });
+
+  test("0x3B: DEC SP", () => {
+    const cpu = createCPUWithROM([0x3b]); // DEC SP
+    cpu.SP = 0x0001;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x0000); // 0x0001 - 1 = 0x0000
+  });
+
+  test("0x3B: DEC SP (wrap around)", () => {
+    const cpu = createCPUWithROM([0x3b]); // DEC SP
+    cpu.SP = 0x0000;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xffff); // 0x0000 - 1 = 0xFFFF (wrap around)
+  });
+
+  // Edge cases and combinations
+  test("0xE8: ADD SP,r8 (negative immediate, no carries)", () => {
+    const cpu = createCPUWithROM([0xe8, 0xff]); // ADD SP,-1 (0xFF = -1 in signed 8-bit)
+    cpu.SP = 0x1200;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0x11ff); // 0x1200 + (-1) = 0x11FF
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (0x0 + 0xF = 0xF, no carry from bit 3)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (0x00 + 0xFF = 0xFF, no carry from bit 7)
+  });
+
+  test("0x23: INC HL (preserves flags)", () => {
+    const cpu = createCPUWithROM([0x23]); // INC HL
+    cpu.HL = 0x1234;
+    cpu.F = 0x50; // Set some flags (Z=0, N=1, H=0, C=1)
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1235); // 0x1234 + 1 = 0x1235
+    expect(cpu.F).toBe(0x50); // Flags completely unchanged
+  });
+
+  test("0x2B: DEC HL (preserves flags)", () => {
+    const cpu = createCPUWithROM([0x2b]); // DEC HL
+    cpu.HL = 0x1234;
+    cpu.F = 0xa0; // Set some flags (Z=1, N=0, H=1, C=0)
+
+    cpu.tick();
+
+    expect(cpu.HL).toBe(0x1233); // 0x1234 - 1 = 0x1233
+    expect(cpu.F).toBe(0xa0); // Flags completely unchanged
+  });
 });

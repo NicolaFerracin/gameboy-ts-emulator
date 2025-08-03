@@ -6,12 +6,10 @@ export const applyMask = (value: number, mask: number): number => value & mask;
 export const u8Mask = (value: number): u8 => applyMask(value, 0xff);
 // Ensures a 16bit register gets the proper 16bit value
 export const u16Mask = (value: number): u16 => applyMask(value, 0xffff);
-// Applies the lower nibble mask (00001111) to a value
-export const lowNibbleMask = (value: u8): u8 => applyMask(value, 0x0f);
-// Applies the high byte mask (1111111100000000) to a value
-export const highByteMask = (value: u16): u16 => applyMask(value, 0xff00);
-// Applies the low byte mask (0000000011111111) to a value
-export const lowByteMask = (value: u16): u16 => applyMask(value, 0x00ff);
+// Applies the 8bit half-carry mask to check for carry from the 3rd to the 4th bit
+export const u8HalfCarryMask = (value: u8): u8 => applyMask(value, 0x0f);
+// Applies the 16bit half-carry mask to check for carry from the 11th to the 12th bit
+export const u16HalfCarryMask = (value: u16): u16 => applyMask(value, 0x0fff);
 
 export const applySign = (value: number): number => (value << 24) >> 24;
 
@@ -26,4 +24,9 @@ export const u16Unpair = (value: u16): [u8, u8] => [
 export const numToHex = (str: number): string =>
   str.toString(16).padStart(2, "0");
 
-export const dec2bin = (dec: number): string => (dec >>> 0).toString(2);
+// Turns an 8bit number to its binary representation
+export const u8ToBin = (dec: number): string =>
+  (dec >>> 0).toString(2).padStart(8, "0");
+// Turns a 16bit number to its binary representation
+export const u16ToBin = (dec: number): string =>
+  (dec >>> 0).toString(2).padStart(16, "0");

@@ -3,10 +3,11 @@ import { u16, u8 } from "./types";
 import {
   applyMask,
   applySign,
-  lowNibbleMask,
   numToHex,
+  u16HalfCarryMask,
   u16Mask,
   u16Unpair,
+  u8HalfCarryMask,
   u8Mask,
   u8Pair,
 } from "./utils.ts";
@@ -196,18 +197,22 @@ export class CPU {
 
       case 0x02:
       case 0x03:
+        // INC BC
+        this.BC++;
+        break;
+
       case 0x04:
         // INC B
         // checks half-carry by checking if the the lower nibble (0-to-3 - resulting from the 0x0f masking)
         // plus 1 overflows (meaning it carries to the bit at position 4 - the 5th bit)
-        this.H_FLAG = lowNibbleMask(this.B++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.B++) + 1 > 0x0f;
         this.Z_FLAG = this.B === 0;
         this.N_FLAG = false;
         break;
 
       case 0x05:
         // DEC B
-        this.H_FLAG = lowNibbleMask(this.B--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.B--) === 0x00;
         this.Z_FLAG = this.B === 0;
         this.N_FLAG = true;
         break;
@@ -227,22 +232,30 @@ export class CPU {
         break;
 
       case 0x09:
+        // ADD HL, BC
+        this._u16ExecuteAdd(this.BC);
+        break;
+
       case 0x0a:
         // LD A, (BC)
         this.A = this._memory.readByte(this.BC);
         break;
 
       case 0x0b:
+        // DEC BC
+        this.BC--;
+        break;
+
       case 0x0c:
         // INC C
-        this.H_FLAG = lowNibbleMask(this.C++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.C++) + 1 > 0x0f;
         this.Z_FLAG = this.C === 0;
         this.N_FLAG = false;
         break;
 
       case 0x0d:
         // DEC C
-        this.H_FLAG = lowNibbleMask(this.C--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.C--) === 0x00;
         this.Z_FLAG = this.C === 0;
         this.N_FLAG = true;
         break;
@@ -264,16 +277,20 @@ export class CPU {
 
       case 0x12:
       case 0x13:
+        // INC DE
+        this.DE++;
+        break;
+
       case 0x14:
         // INC D
-        this.H_FLAG = lowNibbleMask(this.D++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.D++) + 1 > 0x0f;
         this.Z_FLAG = this.D === 0;
         this.N_FLAG = false;
         break;
 
       case 0x15:
         // DEC D
-        this.H_FLAG = lowNibbleMask(this.D--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.D--) === 0x00;
         this.Z_FLAG = this.D === 0;
         this.N_FLAG = true;
         break;
@@ -286,22 +303,30 @@ export class CPU {
       case 0x17:
       case 0x18:
       case 0x19:
+        // ADD HL, DE
+        this._u16ExecuteAdd(this.DE);
+        break;
+
       case 0x1a:
         // LD A, (DE)
         this.A = this._memory.readByte(this.DE);
         break;
 
       case 0x1b:
+        // DEC DE
+        this.DE--;
+        break;
+
       case 0x1c:
         // INC E
-        this.H_FLAG = lowNibbleMask(this.E++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.E++) + 1 > 0x0f;
         this.Z_FLAG = this.E === 0;
         this.N_FLAG = false;
         break;
 
       case 0x1d:
         // DEC E
-        this.H_FLAG = lowNibbleMask(this.E--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.E--) === 0x00;
         this.Z_FLAG = this.E === 0;
         this.N_FLAG = true;
         break;
@@ -327,16 +352,20 @@ export class CPU {
         break;
 
       case 0x23:
+        // INC HL
+        this.HL++;
+        break;
+
       case 0x24:
         // INC H
-        this.H_FLAG = lowNibbleMask(this.H++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.H++) + 1 > 0x0f;
         this.Z_FLAG = this.H === 0;
         this.N_FLAG = false;
         break;
 
       case 0x25:
         // DEC H
-        this.H_FLAG = lowNibbleMask(this.H--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.H--) === 0x00;
         this.Z_FLAG = this.H === 0;
         this.N_FLAG = true;
         break;
@@ -349,22 +378,30 @@ export class CPU {
       case 0x27:
       case 0x28:
       case 0x29:
+        // ADD HL, HL
+        this._u16ExecuteAdd(this.HL);
+        break;
+
       case 0x2a:
         // LD A, (HL+)
         this.A = this._memory.readByte(this.HL++);
         break;
 
       case 0x2b:
+        // DEC HL
+        this.HL--;
+        break;
+
       case 0x2c:
         // INC L
-        this.H_FLAG = lowNibbleMask(this.L++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.L++) + 1 > 0x0f;
         this.Z_FLAG = this.L === 0;
         this.N_FLAG = false;
         break;
 
       case 0x2d:
         // DEC L
-        this.H_FLAG = lowNibbleMask(this.L--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.L--) === 0x00;
         this.Z_FLAG = this.L === 0;
         this.N_FLAG = true;
         break;
@@ -390,6 +427,10 @@ export class CPU {
         break;
 
       case 0x33:
+        // INC SP
+        this.SP++;
+        break;
+
       case 0x34:
       case 0x35:
       case 0x36:
@@ -401,22 +442,30 @@ export class CPU {
       case 0x37:
       case 0x38:
       case 0x39:
+        // ADD HL, SP
+        this._u16ExecuteAdd(this.SP);
+        break;
+
       case 0x3a:
         // LD A, (HL-)
         this.A = this._memory.readByte(this.HL--);
         break;
 
       case 0x3b:
+        // DEC SP
+        this.SP--;
+        break;
+
       case 0x3c:
         // INC A
-        this.H_FLAG = lowNibbleMask(this.A++) + 1 > 0x0f;
+        this.H_FLAG = u8HalfCarryMask(this.A++) + 1 > 0x0f;
         this.Z_FLAG = this.A === 0;
         this.N_FLAG = false;
         break;
 
       case 0x3d:
         // DEC A
-        this.H_FLAG = lowNibbleMask(this.A--) === 0x00;
+        this.H_FLAG = u8HalfCarryMask(this.A--) === 0x00;
         this.Z_FLAG = this.A === 0;
         this.N_FLAG = true;
         break;
@@ -1174,6 +1223,17 @@ export class CPU {
 
       case 0xe7:
       case 0xe8:
+        // ADD SP, s8
+        const add_sp_s8 = this._memory.readByte(this.PC++);
+        this.H_FLAG =
+          u8HalfCarryMask(this.SP) + u8HalfCarryMask(add_sp_s8) > 0x0f;
+        this.C_FLAG = u8Mask(this.SP) + add_sp_s8 > 0xff;
+        // s8 is supposed to be signed
+        this.SP += applySign(add_sp_s8);
+        this.Z_FLAG = false;
+        this.N_FLAG = false;
+        break;
+
       case 0xe9:
       case 0xea:
         // LD(a16), A;
@@ -1234,7 +1294,8 @@ export class CPU {
         this.Z_FLAG = false;
         this.N_FLAG = false;
         // SP is 16bit and s8 is 8bit, but for the flag we consider this as a 8 bit operation and we apply appropriate masking
-        this.H_FLAG = lowNibbleMask(this.SP) + lowNibbleMask(ld_hl_s8) > 0x0f;
+        this.H_FLAG =
+          u8HalfCarryMask(this.SP) + u8HalfCarryMask(ld_hl_s8) > 0x0f;
         this.C_FLAG = u8Mask(this.SP) + u8Mask(ld_hl_s8) > 0xff;
         break;
 
@@ -1268,15 +1329,22 @@ export class CPU {
   }
 
   _u8ExecuteAdd(op: u8, carry: u8 = 0) {
-    this.H_FLAG = lowNibbleMask(this.A) + lowNibbleMask(op) + carry > 0x0f;
+    this.H_FLAG = u8HalfCarryMask(this.A) + u8HalfCarryMask(op) + carry > 0x0f;
     this.C_FLAG = this.A + op + carry > 0xff;
     this.A += op + carry;
     this.Z_FLAG = this.A === 0x00;
     this.N_FLAG = false;
   }
 
+  _u16ExecuteAdd(op: u16) {
+    this.H_FLAG = u16HalfCarryMask(this.HL) + u16HalfCarryMask(op) > 0x0fff;
+    this.C_FLAG = this.HL + op > 0xffff;
+    this.HL += op;
+    this.N_FLAG = false;
+  }
+
   _u8ExecuteSub(op: u8, carry: u8 = 0) {
-    this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(op) - carry < 0x00;
+    this.H_FLAG = u8HalfCarryMask(this.A) - u8HalfCarryMask(op) - carry < 0x00;
     this.C_FLAG = this.A - op - carry < 0x00;
     this.A -= op + carry;
     this.Z_FLAG = this.A === 0x00;
@@ -1310,7 +1378,7 @@ export class CPU {
   _u8ExecuteCp(op: u8) {
     this.Z_FLAG = this.A === op;
     this.N_FLAG = true;
-    this.H_FLAG = lowNibbleMask(this.A) - lowNibbleMask(op) < 0x00;
+    this.H_FLAG = u8HalfCarryMask(this.A) - u8HalfCarryMask(op) < 0x00;
     this.C_FLAG = this.A - op < 0x00;
   }
 }
