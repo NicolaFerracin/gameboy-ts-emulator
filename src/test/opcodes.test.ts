@@ -2911,4 +2911,220 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.HL).toBe(0x1233); // 0x1234 - 1 = 0x1233
     expect(cpu.F).toBe(0xa0); // Flags completely unchanged
   });
+
+  // Test cases for Game Boy CB SWAP operations (CB 30-37)
+
+  test("CB 30: SWAP B", () => {
+    const cpu = createCPUWithROM([0xcb, 0x30]); // SWAP B
+    cpu.B = 0x12;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0x21); // Swap 0x12 -> 0x21 (upper/lower nibbles swapped)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (result != 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear (always clear for SWAP)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (always clear for SWAP)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (always clear for SWAP)
+  });
+
+  test("CB 30: SWAP B (zero result)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x30]); // SWAP B
+    cpu.B = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0x00); // Swap 0x00 -> 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 31: SWAP C", () => {
+    const cpu = createCPUWithROM([0xcb, 0x31]); // SWAP C
+    cpu.C = 0xab;
+
+    cpu.tick();
+
+    expect(cpu.C).toBe(0xba); // Swap 0xAB -> 0xBA
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 32: SWAP D", () => {
+    const cpu = createCPUWithROM([0xcb, 0x32]); // SWAP D
+    cpu.D = 0xf0;
+
+    cpu.tick();
+
+    expect(cpu.D).toBe(0x0f); // Swap 0xF0 -> 0x0F
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 33: SWAP E", () => {
+    const cpu = createCPUWithROM([0xcb, 0x33]); // SWAP E
+    cpu.E = 0x05;
+
+    cpu.tick();
+
+    expect(cpu.E).toBe(0x50); // Swap 0x05 -> 0x50
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 34: SWAP H", () => {
+    const cpu = createCPUWithROM([0xcb, 0x34]); // SWAP H
+    cpu.H = 0x9c;
+
+    cpu.tick();
+
+    expect(cpu.H).toBe(0xc9); // Swap 0x9C -> 0xC9
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 35: SWAP L", () => {
+    const cpu = createCPUWithROM([0xcb, 0x35]); // SWAP L
+    cpu.L = 0x3d;
+
+    cpu.tick();
+
+    expect(cpu.L).toBe(0xd3); // Swap 0x3D -> 0xD3
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 36: SWAP (HL)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x36]); // SWAP (HL)
+    cpu.HL = 0xc000;
+    (cpu as any)._memory.writeByte(0xc000, 0x87);
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xc000)).toBe(0x78); // Swap 0x87 -> 0x78
+    expect(cpu.HL).toBe(0xc000); // HL unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 36: SWAP (HL) (zero result)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x36]); // SWAP (HL)
+    cpu.HL = 0xc000;
+    (cpu as any)._memory.writeByte(0xc000, 0x00);
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xc000)).toBe(0x00); // Swap 0x00 -> 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 37: SWAP A", () => {
+    const cpu = createCPUWithROM([0xcb, 0x37]); // SWAP A
+    cpu.A = 0x4e;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0xe4); // Swap 0x4E -> 0xE4
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 37: SWAP A (zero result)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x37]); // SWAP A
+    cpu.A = 0x00;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x00); // Swap 0x00 -> 0x00
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result == 0)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 30: SWAP B (symmetric nibbles)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x30]); // SWAP B
+    cpu.B = 0x77;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0x77); // Swap 0x77 -> 0x77 (same result since nibbles are identical)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 31: SWAP C (single nibble)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x31]); // SWAP C
+    cpu.C = 0x0a;
+
+    cpu.tick();
+
+    expect(cpu.C).toBe(0xa0); // Swap 0x0A -> 0xA0
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 32: SWAP D (other single nibble)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x32]); // SWAP D
+    cpu.D = 0xb0;
+
+    cpu.tick();
+
+    expect(cpu.D).toBe(0x0b); // Swap 0xB0 -> 0x0B
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 36: SWAP (HL) (complex address)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x36]); // SWAP (HL)
+    cpu.HL = 0xff80;
+    (cpu as any)._memory.writeByte(0xff80, 0x1f);
+
+    cpu.tick();
+
+    expect((cpu as any)._memory.readByte(0xff80)).toBe(0xf1); // Swap 0x1F -> 0xF1
+    expect(cpu.HL).toBe(0xff80); // HL unchanged
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("CB 37: SWAP A (flag preservation test)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x37]); // SWAP A
+    cpu.A = 0x42;
+    cpu.F = 0xf0; // Set all flags initially
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0x24); // Swap 0x42 -> 0x24
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear (overwritten by SWAP result)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear (always clear for SWAP)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (always clear for SWAP)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear (always clear for SWAP)
+  });
 });

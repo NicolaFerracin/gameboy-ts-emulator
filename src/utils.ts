@@ -1,4 +1,4 @@
-import { u16, u8 } from "./types";
+import { u16, u4, u8 } from "./types";
 
 // Apply any mask to a value
 export const applyMask = (value: number, mask: number): number => value & mask;
@@ -19,6 +19,14 @@ export const u8Pair = (low: u8, high: u8): u16 => (high << 8) | low;
 export const u16Unpair = (value: u16): [u8, u8] => [
   u8Mask(value), // low
   u8Mask(value >> 8), // high
+];
+
+// Combines the values of 2 4bit values into an 8bit value
+export const u4Pair = (low: u4, high: u4): u8 => (high << 4) | low;
+// Breaks an 8bit value into 2 4bit values
+export const u8Unpair = (value: u8): [u4, u4] => [
+  applyMask(value, 0x0f), // low
+  applyMask(value >> 4, 0x0f), // high
 ];
 
 export const numToHex = (str: number): string =>
