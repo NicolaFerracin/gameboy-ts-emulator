@@ -28,6 +28,8 @@ export class CPU {
   private _IR: u16 = 0;
   private _IE: u16 = 0;
   private _memory: Memory;
+  private isHalted: boolean; // Stops the System Clock
+  private isStopped: boolean; // Stops both the System Clock and Oscillator Circuit
 
   get A(): u8 {
     return this._A;
@@ -168,6 +170,8 @@ export class CPU {
 
   constructor(memory: Memory) {
     this._memory = memory;
+    this.isHalted = false;
+    this.isStopped = false;
   }
 
   tick() {
@@ -269,6 +273,10 @@ export class CPU {
 
       case 0x0f:
       case 0x10:
+        // STOP
+        this.isStopped = true;
+        break;
+
       case 0x11:
         // LD DE, d16
         this.DE = u8Pair(
@@ -487,6 +495,12 @@ export class CPU {
         break;
 
       case 0x37:
+        // SCF
+        this.C_FLAG = true;
+        this.N_FLAG = false;
+        this.H_FLAG = false;
+        break;
+
       case 0x38:
       case 0x39:
         // ADD HL, SP
@@ -523,6 +537,12 @@ export class CPU {
         break;
 
       case 0x3f:
+        // CCF
+        this.C_FLAG = !this.C_FLAG;
+        this.N_FLAG = false;
+        this.H_FLAG = false;
+        break;
+
       case 0x40:
         // LD B, B
         // Effectively a NOP
@@ -794,6 +814,10 @@ export class CPU {
         break;
 
       case 0x76:
+        // HALT
+        this.isHalted = true;
+        break;
+
       case 0x77:
         // LD (HL), A
         this._memory.writeByte(this.HL, this.A);

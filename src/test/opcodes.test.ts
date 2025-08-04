@@ -3557,4 +3557,291 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
       // CPL takes 4 cycles - you might want to test this if you track cycles
     });
   });
+
+  describe("0x3F: CCF (Complement Carry Flag)", () => {
+    test("CCF complements carry flag from 0 to 1", () => {
+      const cpu = createCPUWithROM([0x3f]); // CCF only
+      cpu.F = 0x80; // Z=1, N=0, H=0, C=0
+
+      cpu.tick(); // Execute CCF
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag now set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F).toBe(0x90); // Final: Z=1, N=0, H=0, C=1
+    });
+
+    test("CCF complements carry flag from 1 to 0", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.F = 0xf0; // Z=1, N=1, H=1, C=1 (all flags set)
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x00); // C flag now clear
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F).toBe(0x80); // Final: Z=1, N=0, H=0, C=0
+    });
+
+    test("CCF with carry clear and Z flag clear", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.F = 0x60; // Z=0, N=1, H=1, C=0
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag now set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag preserved (clear)
+      expect(cpu.F).toBe(0x10); // Final: Z=0, N=0, H=0, C=1
+    });
+
+    test("CCF with carry set and Z flag clear", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.F = 0x70; // Z=0, N=1, H=1, C=1
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x00); // C flag now clear
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag preserved (clear)
+      expect(cpu.F).toBe(0x00); // Final: Z=0, N=0, H=0, C=0
+    });
+
+    test("CCF with all flags initially clear", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.F = 0x00; // All flags clear
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag clear
+      expect(cpu.F & 0x20).toBe(0x00); // H flag clear
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag clear
+      expect(cpu.F).toBe(0x10); // Final: Z=0, N=0, H=0, C=1
+    });
+
+    test("CCF only affects specific flags", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.F = 0xa0; // Z=1, N=0, H=1, C=0
+
+      cpu.tick();
+
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag unchanged
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x10).toBe(0x10); // C flag complemented (set)
+      expect(cpu.F).toBe(0x90); // Final: Z=1, N=0, H=0, C=1
+    });
+
+    test("CCF does not affect accumulator", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.A = 0x42;
+      cpu.F = 0x10; // C flag set
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x42); // A unchanged
+      expect(cpu.F & 0x10).toBe(0x00); // C flag complemented (cleared)
+    });
+
+    test("CCF timing and PC increment", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      const initialPC = cpu.PC;
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.PC).toBe(initialPC + 1); // PC should increment by 1
+      expect(cpu.F).toBe(0x10); // C flag set, others clear
+      // CCF takes 4 cycles - you might want to test this if you track cycles
+    });
+
+    test("CCF repeated execution toggles carry", () => {
+      const cpu = createCPUWithROM([0x3f, 0x3f]); // Two CCF instructions
+      cpu.F = 0x80; // Z=1, others clear
+
+      // First CCF
+      cpu.tick();
+      expect(cpu.F).toBe(0x90); // Z=1, C=1
+
+      // Second CCF
+      cpu.tick();
+      expect(cpu.F).toBe(0x80); // Z=1, C=0 (back to original C state)
+    });
+
+    test("CCF flag masking - only affects flag register bits", () => {
+      const cpu = createCPUWithROM([0x3f]);
+      cpu.F = 0xff; // All bits set (including unused bits)
+
+      cpu.tick();
+
+      // Should only affect the 4 flag bits, but this depends on your implementation
+      // The Game Boy only uses bits 7,6,5,4 for Z,N,H,C respectively
+      expect(cpu.F & 0x10).toBe(0x00); // C complemented (was 1, now 0)
+      expect(cpu.F & 0x40).toBe(0x00); // N cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H cleared
+      expect(cpu.F & 0x80).toBe(0x80); // Z preserved
+    });
+  });
+  describe("0x37: SCF (Set Carry Flag)", () => {
+    test("SCF sets carry flag when initially clear", () => {
+      const cpu = createCPUWithROM([0x37]); // SCF only
+      cpu.F = 0x80; // Z=1, N=0, H=0, C=0
+
+      cpu.tick(); // Execute SCF
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag now set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F).toBe(0x90); // Final: Z=1, N=0, H=0, C=1
+    });
+
+    test("SCF sets carry flag when already set", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.F = 0xf0; // Z=1, N=1, H=1, C=1 (all flags set)
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag remains set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F).toBe(0x90); // Final: Z=1, N=0, H=0, C=1
+    });
+
+    test("SCF with Z flag clear", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.F = 0x60; // Z=0, N=1, H=1, C=0
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag preserved (clear)
+      expect(cpu.F).toBe(0x10); // Final: Z=0, N=0, H=0, C=1
+    });
+
+    test("SCF with all flags initially clear", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.F = 0x00; // All flags clear
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag clear
+      expect(cpu.F & 0x20).toBe(0x00); // H flag clear
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag clear
+      expect(cpu.F).toBe(0x10); // Final: Z=0, N=0, H=0, C=1
+    });
+
+    test("SCF only affects specific flags", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.F = 0xa0; // Z=1, N=0, H=1, C=0
+
+      cpu.tick();
+
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag unchanged
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set
+      expect(cpu.F).toBe(0x90); // Final: Z=1, N=0, H=0, C=1
+    });
+
+    test("SCF does not affect accumulator or other registers", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.A = 0x42;
+      cpu.B = 0x11;
+      cpu.C = 0x22;
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x42); // A unchanged
+      expect(cpu.B).toBe(0x11); // B unchanged
+      expect(cpu.C).toBe(0x22); // C unchanged
+      expect(cpu.F).toBe(0x10); // Only flags affected
+    });
+
+    test("SCF always produces same flag result regardless of initial N and H", () => {
+      const testCases = [
+        { initial: 0x00, expected: 0x10 }, // Z=0, N=0, H=0, C=0
+        { initial: 0x20, expected: 0x10 }, // Z=0, N=0, H=1, C=0
+        { initial: 0x40, expected: 0x10 }, // Z=0, N=1, H=0, C=0
+        { initial: 0x60, expected: 0x10 }, // Z=0, N=1, H=1, C=0
+        { initial: 0x80, expected: 0x90 }, // Z=1, N=0, H=0, C=0
+        { initial: 0xa0, expected: 0x90 }, // Z=1, N=0, H=1, C=0
+        { initial: 0xc0, expected: 0x90 }, // Z=1, N=1, H=0, C=0
+        { initial: 0xe0, expected: 0x90 }, // Z=1, N=1, H=1, C=0
+      ];
+
+      testCases.forEach(({ initial, expected }) => {
+        const cpu = createCPUWithROM([0x37]);
+        cpu.F = initial;
+        cpu.tick();
+        expect(cpu.F).toBe(expected);
+      });
+    });
+
+    test("SCF timing and PC increment", () => {
+      const cpu = createCPUWithROM([0x37]);
+      const initialPC = cpu.PC;
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.PC).toBe(initialPC + 1); // PC should increment by 1
+      expect(cpu.F).toBe(0x10); // C flag set, others clear
+      // SCF takes 4 cycles - you might want to test this if you track cycles
+    });
+
+    test("SCF is idempotent - multiple executions produce same result", () => {
+      const cpu = createCPUWithROM([0x37, 0x37, 0x37]); // Three SCF instructions
+      cpu.F = 0x60; // Z=0, N=1, H=1, C=0
+
+      // First SCF
+      cpu.tick();
+      expect(cpu.F).toBe(0x10); // Z=0, N=0, H=0, C=1
+
+      // Second SCF
+      cpu.tick();
+      expect(cpu.F).toBe(0x10); // Same result
+
+      // Third SCF
+      cpu.tick();
+      expect(cpu.F).toBe(0x10); // Same result
+    });
+
+    test("SCF with carry already set - N and H still cleared", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.F = 0x70; // Z=0, N=1, H=1, C=1
+
+      cpu.tick();
+
+      expect(cpu.F & 0x10).toBe(0x10); // C flag remains set
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag preserved (clear)
+      expect(cpu.F).toBe(0x10); // Final: Z=0, N=0, H=0, C=1
+    });
+
+    test("SCF flag masking - only affects flag register bits", () => {
+      const cpu = createCPUWithROM([0x37]);
+      cpu.F = 0x8f; // Z=1, with some unused bits potentially set
+
+      cpu.tick();
+
+      // Should only affect the 4 flag bits
+      expect(cpu.F & 0x10).toBe(0x10); // C set
+      expect(cpu.F & 0x40).toBe(0x00); // N cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H cleared
+      expect(cpu.F & 0x80).toBe(0x80); // Z preserved
+      expect(cpu.F & 0x0f).toBe(0x00); // Lower 4 bits should be 0 (unused in GB)
+    });
+  });
 });
