@@ -3127,4 +3127,232 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.F & 0x20).toBe(0); // H flag clear (always clear for SWAP)
     expect(cpu.F & 0x10).toBe(0); // C flag clear (always clear for SWAP)
   });
+
+  // Test cases for Game Boy DAA (Decimal Adjust Accumulator) operation (0x27)
+
+  // Addition cases - when N flag is clear
+  test("0x27: DAA after ADD (9 + 1 = 10 in BCD)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x09; // BCD 9
+    cpu.B = 0x01; // BCD 1
+
+    cpu.tick(); // Execute ADD B (A = 0x0A, H=0, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x10); // 0x0A adjusted to 0x10 (BCD for decimal 10)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear (preserved from ADD)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (cleared by DAA)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA after ADD (5 + 5 = 10 in BCD)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x05; // BCD 5
+    cpu.B = 0x05; // BCD 5
+
+    cpu.tick(); // Execute ADD B (A = 0x0A, H=0, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x10); // 0x0A adjusted to 0x10 (BCD for decimal 10)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA after ADD (19 + 1 = 20 in BCD)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x19; // BCD 19
+    cpu.B = 0x01; // BCD 1
+
+    cpu.tick(); // Execute ADD B (A = 0x1A, H=0, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x20); // 0x1A adjusted to 0x20 (BCD for decimal 20)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA after ADD with half carry (9 + 7 = 16 in BCD)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x09; // BCD 9
+    cpu.B = 0x07; // BCD 7
+
+    cpu.tick(); // Execute ADD B (A = 0x10, H=1, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x16); // 0x10 adjusted to 0x16 (BCD for decimal 16)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA after ADD with carry (99 + 1 = 100 in BCD)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x99; // BCD 99
+    cpu.B = 0x01; // BCD 1
+
+    cpu.tick(); // Execute ADD B (A = 0x9A, H=0, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x00); // 0x9A adjusted to 0x00 (BCD for 100, but only 2 digits fit)
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result is 0x00)
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (carry out)
+  });
+
+  test("0x27: DAA after ADD with both carries (99 + 9 = 108 in BCD)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x99; // BCD 99
+    cpu.B = 0x09; // BCD 9
+
+    cpu.tick(); // Execute ADD B (A = 0xA2, H=1, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x08); // 0xA2 adjusted to 0x08 (BCD for 108, but only 2 digits fit)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (carry out)
+  });
+
+  // Subtraction cases - when N flag is set
+  test("0x27: DAA after SUB (10 - 1 = 9 in BCD)", () => {
+    const cpu = createCPUWithROM([0x90, 0x27]); // SUB B, then DAA
+    cpu.A = 0x10; // BCD 10
+    cpu.B = 0x01; // BCD 1
+
+    cpu.tick(); // Execute SUB B (A = 0x0F, H=1, C=0, N=1)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x09); // 0x0F adjusted to 0x09 (BCD for decimal 9)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set (preserved from SUB)
+    expect(cpu.F & 0x20).toBe(0); // H flag clear (cleared by DAA)
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA after SUB (20 - 1 = 19 in BCD)", () => {
+    const cpu = createCPUWithROM([0x90, 0x27]); // SUB B, then DAA
+    cpu.A = 0x20; // BCD 20
+    cpu.B = 0x01; // BCD 1
+
+    cpu.tick(); // Execute SUB B (A = 0x1F, H=1, C=0, N=1)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x19); // 0x1F adjusted to 0x19 (BCD for decimal 19)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA after SUB with borrow (0 - 1 in BCD)", () => {
+    const cpu = createCPUWithROM([0x90, 0x27]); // SUB B, then DAA
+    cpu.A = 0x00; // BCD 0
+    cpu.B = 0x01; // BCD 1
+
+    cpu.tick(); // Execute SUB B (A = 0xFF, H=1, C=1, N=1)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x99); // 0xFF adjusted to 0x99 (BCD for -1, represented as 99)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag set (borrow)
+  });
+
+  // Edge cases
+  test("0x27: DAA with no adjustment needed (addition)", () => {
+    const cpu = createCPUWithROM([0x80, 0x27]); // ADD B, then DAA
+    cpu.A = 0x12; // BCD 12
+    cpu.B = 0x34; // BCD 34
+
+    cpu.tick(); // Execute ADD B (A = 0x46, H=0, C=0, N=0)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x46); // 0x46 needs no adjustment (valid BCD for 46)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA with no adjustment needed (subtraction)", () => {
+    const cpu = createCPUWithROM([0x90, 0x27]); // SUB B, then DAA
+    cpu.A = 0x46; // BCD 46
+    cpu.B = 0x23; // BCD 23
+
+    cpu.tick(); // Execute SUB B (A = 0x23, H=0, C=0, N=1)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x23); // 0x23 needs no adjustment (valid BCD for 23)
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA resulting in zero", () => {
+    const cpu = createCPUWithROM([0x90, 0x27]); // SUB B, then DAA
+    cpu.A = 0x50; // BCD 50
+    cpu.B = 0x50; // BCD 50
+
+    cpu.tick(); // Execute SUB B (A = 0x00, H=0, C=0, N=1)
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x00); // 0x00 needs no adjustment
+    expect(cpu.F & 0x80).toBe(0x80); // Z flag set (result is zero)
+    expect(cpu.F & 0x40).toBe(0x40); // N flag set
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  // Test DAA behavior when called directly (not after arithmetic)
+  test("0x27: DAA with invalid BCD in A register", () => {
+    const cpu = createCPUWithROM([0x27]); // DAA only
+    cpu.A = 0x1a; // Invalid BCD (A > 9 in lower nibble)
+    cpu.F = 0x00; // N=0 (addition mode), H=0, C=0
+
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x20); // 0x1A adjusted to 0x20
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA with H flag set but valid BCD", () => {
+    const cpu = createCPUWithROM([0x27]); // DAA only
+    cpu.A = 0x16; // Valid BCD
+    cpu.F = 0x20; // N=0, H=1, C=0
+
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0x1c); // 0x16 + 0x06 (due to H flag) = 0x1C
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0); // C flag clear
+  });
+
+  test("0x27: DAA with C flag set", () => {
+    const cpu = createCPUWithROM([0x27]); // DAA only
+    cpu.A = 0x46; // Valid BCD
+    cpu.F = 0x10; // N=0, H=0, C=1
+
+    cpu.tick(); // Execute DAA
+
+    expect(cpu.A).toBe(0xa6); // 0x46 + 0x60 = 0xA6
+    expect(cpu.F & 0x80).toBe(0); // Z flag clear
+    expect(cpu.F & 0x40).toBe(0); // N flag clear
+    expect(cpu.F & 0x20).toBe(0); // H flag clear
+    expect(cpu.F & 0x10).toBe(0x10); // C flag preserved
+  });
 });

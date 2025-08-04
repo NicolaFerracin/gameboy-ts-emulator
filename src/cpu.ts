@@ -378,6 +378,45 @@ export class CPU {
         break;
 
       case 0x27:
+        // DAA
+        // always called after an addition or a subtraction.
+        // We use the F flags that were set in the previous operation to decide what to do
+        // This opcode turns the A reg into a Binary-Coded Decimal:
+        // 0x11 -> 0x11 => stays the same
+        // 0x1a -> 0x26 => 'a' is not valid, and we need to wrap around and turn it into a decimal. While doing that we have a carry on the 1
+        // 0xa1 -> 0x161 => same as above, 'a' becomes 6 and we have a carry to the higher bit
+
+        // if we there was an addition then the N flag was not set...
+        if (!this.N_FLAG) {
+          // ...if A is above 0x99 or there was a carry...
+          if (this.A > 0x99 || this.C_FLAG) {
+            // ...we wrap A around
+            this.A += 0x60;
+            // ...we set the carry flag
+            this.C_FLAG = true;
+          }
+          // ...if the low nibble is greater than 0x09 orthere was an half-carry...
+          if (u8HalfCarryMask(this.A) > 0x09 || this.H_FLAG) {
+            // ...we wrap the low nibble of A around
+            this.A += 0x06;
+            // ...we don't set the half-carry flag, because it's always cleared at the end
+          }
+        }
+        // else (there was a subtraction)...
+        else {
+          // ...with additions, you get into the 0xaa/0xff range by:
+          // - doing a carry (0x80 + 0x80 => 0x100)
+          // - or by simply adding values (0x09 + 0x01 => 0x0a)
+          // it's fairly easy to visualize as you keep adding from 0 to a, you don't necessarily incur in a carry to get into the 0xa/0xf range
+          // BUT with subtraction, the only way to get into the range is by having a carry or half-carry
+          // in fact you go from 5 -> 4 -> 3 -> 2 -> 1 -> 0 -> f ====> you get to the 0xa/0xf range only with a carry or half-carry
+          if (this.C_FLAG) this.A -= 0x60;
+          if (this.H_FLAG) this.A -= 0x06;
+        }
+
+        this.Z_FLAG = this.A === 0;
+        this.H_FLAG = false;
+        break;
       case 0x28:
       case 0x29:
         // ADD HL, HL
