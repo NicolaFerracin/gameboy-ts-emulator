@@ -3355,4 +3355,206 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.F & 0x20).toBe(0); // H flag clear
     expect(cpu.F & 0x10).toBe(0x10); // C flag preserved
   });
+
+  describe("0x2F: CPL (Complement A)", () => {
+    test("CPL complements all bits in A", () => {
+      const cpu = createCPUWithROM([0x2f]); // CPL only
+      cpu.A = 0xaa; // 10101010
+      cpu.F = 0x00; // Clear all flags
+
+      cpu.tick(); // Execute CPL
+
+      expect(cpu.A).toBe(0x55); // 01010101 (complement of 0xAA)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+      expect(cpu.F & 0x90).toBe(0x00); // Z and C flags unchanged (cleared)
+    });
+
+    test("CPL with A = 0x00", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x00; // 00000000
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xff); // 11111111 (complement of 0x00)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+    });
+
+    test("CPL with A = 0xFF", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0xff; // 11111111
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x00); // 00000000 (complement of 0xFF)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+    });
+
+    test("CPL preserves Z and C flags when they are set", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x0f; // 00001111
+      cpu.F = 0x90; // Z and C flags set, N and H clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xf0); // 11110000 (complement of 0x0F)
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F & 0x10).toBe(0x10); // C flag preserved
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+    });
+
+    test("CPL preserves Z and C flags when they are clear", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x33; // 00110011
+      cpu.F = 0x60; // N and H already set, Z and C clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xcc); // 11001100 (complement of 0x33)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag preserved (clear)
+      expect(cpu.F & 0x10).toBe(0x00); // C flag preserved (clear)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags remain set
+    });
+
+    test("CPL flag behavior - always sets N and H", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x42;
+      cpu.F = 0x00; // All flags clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xbd); // ~0x42
+      expect(cpu.F & 0x40).toBe(0x40); // N flag set
+      expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    });
+
+    test("CPL with mixed flag states", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x7e; // 01111110
+      cpu.F = 0xa0; // Z set, N clear, H set, C clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x81); // 10000001 (complement of 0x7E)
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F & 0x40).toBe(0x40); // N flag now set
+      expect(cpu.F & 0x20).toBe(0x20); // H flag now set
+      expect(cpu.F & 0x10).toBe(0x00); // C flag preserved (clear)
+      expect(cpu.F).toBe(0xe0); // Final flags: Z=1, N=1, H=1, C=0
+    });
+
+    test("CPL timing and PC increment", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      const initialPC = cpu.PC;
+      cpu.A = 0x5a;
+
+      cpu.tick();
+
+      expect(cpu.PC).toBe(initialPC + 1); // PC should increment by 1
+      expect(cpu.A).toBe(0xa5); // ~0x5A
+      // CPL takes 4 cycles - you might want to test this if you track cycles
+    });
+  });
+
+  describe("0x2F: CPL (Complement A)", () => {
+    test("CPL complements all bits in A", () => {
+      const cpu = createCPUWithROM([0x2f]); // CPL only
+      cpu.A = 0xaa; // 10101010
+      cpu.F = 0x00; // Clear all flags
+
+      cpu.tick(); // Execute CPL
+
+      expect(cpu.A).toBe(0x55); // 01010101 (complement of 0xAA)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+      expect(cpu.F & 0x90).toBe(0x00); // Z and C flags unchanged (cleared)
+    });
+
+    test("CPL with A = 0x00", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x00; // 00000000
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xff); // 11111111 (complement of 0x00)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+    });
+
+    test("CPL with A = 0xFF", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0xff; // 11111111
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x00); // 00000000 (complement of 0xFF)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+    });
+
+    test("CPL preserves Z and C flags when they are set", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x0f; // 00001111
+      cpu.F = 0x90; // Z and C flags set, N and H clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xf0); // 11110000 (complement of 0x0F)
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F & 0x10).toBe(0x10); // C flag preserved
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags set
+    });
+
+    test("CPL preserves Z and C flags when they are clear", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x33; // 00110011
+      cpu.F = 0x60; // N and H already set, Z and C clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xcc); // 11001100 (complement of 0x33)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag preserved (clear)
+      expect(cpu.F & 0x10).toBe(0x00); // C flag preserved (clear)
+      expect(cpu.F & 0x60).toBe(0x60); // N and H flags remain set
+    });
+
+    test("CPL flag behavior - always sets N and H", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x42;
+      cpu.F = 0x00; // All flags clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xbd); // ~0x42
+      expect(cpu.F & 0x40).toBe(0x40); // N flag set
+      expect(cpu.F & 0x20).toBe(0x20); // H flag set
+    });
+
+    test("CPL with mixed flag states", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      cpu.A = 0x7e; // 01111110
+      cpu.F = 0xa0; // Z set, N clear, H set, C clear
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x81); // 10000001 (complement of 0x7E)
+      expect(cpu.F & 0x80).toBe(0x80); // Z flag preserved
+      expect(cpu.F & 0x40).toBe(0x40); // N flag now set
+      expect(cpu.F & 0x20).toBe(0x20); // H flag now set
+      expect(cpu.F & 0x10).toBe(0x00); // C flag preserved (clear)
+      expect(cpu.F).toBe(0xe0); // Final flags: Z=1, N=1, H=1, C=0
+    });
+
+    test("CPL timing and PC increment", () => {
+      const cpu = createCPUWithROM([0x2f]);
+      const initialPC = cpu.PC;
+      cpu.A = 0x5a;
+
+      cpu.tick();
+
+      expect(cpu.PC).toBe(initialPC + 1); // PC should increment by 1
+      expect(cpu.A).toBe(0xa5); // ~0x5A
+      // CPL takes 4 cycles - you might want to test this if you track cycles
+    });
+  });
 });

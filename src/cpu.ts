@@ -453,6 +453,12 @@ export class CPU {
         break;
 
       case 0x2f:
+        // CPL
+        this.A = ~this.A;
+        this.N_FLAG = true;
+        this.H_FLAG = true;
+        break;
+
       case 0x30:
       case 0x31:
         // LD SP, d16
