@@ -3,7 +3,9 @@ import { u16, u8 } from "./types";
 import {
   applyMask,
   applySign,
+  getBitAtPos,
   numToHex,
+  setBitAtPos,
   u16HalfCarryMask,
   u16Mask,
   u16Unpair,
@@ -229,6 +231,10 @@ export class CPU {
         break;
 
       case 0x07:
+        // RLCA
+        this.A = this._executeRotateLeft(this.A, false);
+        break;
+
       case 0x08:
         // LD (a16), SP
         const ld_a6_addr = this._memory.readByte(this.PC++);
@@ -272,6 +278,10 @@ export class CPU {
         break;
 
       case 0x0f:
+        // RRCA
+        this.A = this._executeRotateRight(this.A, false);
+        break;
+
       case 0x10:
         // STOP
         this.isStopped = true;
@@ -311,6 +321,10 @@ export class CPU {
         break;
 
       case 0x17:
+        // RLA
+        this.A = this._executeRotateLeftThroughCarry(this.A, false);
+        break;
+
       case 0x18:
       case 0x19:
         // ADD HL, DE
@@ -347,6 +361,10 @@ export class CPU {
         break;
 
       case 0x1f:
+        // RRA
+        this.A = this._executeRotateRightThroughCarry(this.A, false);
+        break;
+
       case 0x20:
       case 0x21:
         // LD HL, d16
@@ -1407,37 +1425,177 @@ export class CPU {
 
     switch (cbOpcode) {
       case 0x00:
+        // RLC B
+        this.B = this._executeRotateLeft(this.B);
+        break;
+
       case 0x01:
+        // RLC C
+        this.C = this._executeRotateLeft(this.C);
+        break;
+
       case 0x02:
+        // RLC D
+        this.D = this._executeRotateLeft(this.D);
+        break;
+
       case 0x03:
+        // RLC E
+        this.E = this._executeRotateLeft(this.E);
+        break;
+
       case 0x04:
+        // RLC H
+        this.H = this._executeRotateLeft(this.H);
+        break;
+
       case 0x05:
+        // RLC L
+        this.L = this._executeRotateLeft(this.L);
+        break;
+
       case 0x06:
+        // RLC (HL)
+        this._memory.writeByte(
+          this.HL,
+          this._executeRotateLeft(this._memory.readByte(this.HL))
+        );
+        break;
+
       case 0x07:
+        // RLC A
+        this.A = this._executeRotateLeft(this.A);
+        break;
+
       case 0x08:
+        // RRC B
+        this.B = this._executeRotateRight(this.B);
+        break;
+
       case 0x09:
+        // RRC C
+        this.C = this._executeRotateRight(this.C);
+        break;
+
       case 0x0a:
+        // RRC D
+        this.D = this._executeRotateRight(this.D);
+        break;
+
       case 0x0b:
+        // RRC E
+        this.E = this._executeRotateRight(this.E);
+        break;
+
       case 0x0c:
+        // RRC H
+        this.H = this._executeRotateRight(this.H);
+        break;
+
       case 0x0d:
+        // RRC L
+        this.L = this._executeRotateRight(this.L);
+        break;
+
       case 0x0e:
+        // RRC (HL)
+        this._memory.writeByte(
+          this.HL,
+          this._executeRotateRight(this._memory.readByte(this.HL))
+        );
+        break;
+
       case 0x0f:
+        // RRC A
+        this.A = this._executeRotateRight(this.A);
+        break;
+
       case 0x10:
+        // RL B
+        this.B = this._executeRotateLeftThroughCarry(this.B);
+        break;
+
       case 0x11:
+        // RL C
+        this.C = this._executeRotateLeftThroughCarry(this.C);
+        break;
+
       case 0x12:
+        // RL D
+        this.D = this._executeRotateLeftThroughCarry(this.D);
+        break;
+
       case 0x13:
+        // RL E
+        this.E = this._executeRotateLeftThroughCarry(this.E);
+        break;
+
       case 0x14:
+        // RL H
+        this.H = this._executeRotateLeftThroughCarry(this.H);
+        break;
+
       case 0x15:
+        // RL L
+        this.L = this._executeRotateLeftThroughCarry(this.L);
+        break;
+
       case 0x16:
+        // RL (HL)
+        this._memory.writeByte(
+          this.HL,
+          this._executeRotateLeftThroughCarry(this._memory.readByte(this.HL))
+        );
+        break;
+
       case 0x17:
+        // RL A
+        this.A = this._executeRotateLeftThroughCarry(this.A);
+        break;
+
       case 0x18:
+        // RR B
+        this.B = this._executeRotateRightThroughCarry(this.B);
+        break;
+
       case 0x19:
+        // RR C
+        this.C = this._executeRotateRightThroughCarry(this.C);
+        break;
+
       case 0x1a:
+        // RR D
+        this.D = this._executeRotateRightThroughCarry(this.D);
+        break;
+
       case 0x1b:
+        // RR E
+        this.E = this._executeRotateRightThroughCarry(this.E);
+        break;
+
       case 0x1c:
+        // RR H
+        this.H = this._executeRotateRightThroughCarry(this.H);
+        break;
+
       case 0x1d:
+        // RR L
+        this.L = this._executeRotateRightThroughCarry(this.L);
+        break;
+
       case 0x1e:
+        // RR (HL)
+        this._memory.writeByte(
+          this.HL,
+          this._executeRotateRightThroughCarry(this._memory.readByte(this.HL))
+        );
+        break;
+
       case 0x1f:
+        // RR A
+        this.A = this._executeRotateRightThroughCarry(this.A);
+        break;
+
       case 0x20:
       case 0x21:
       case 0x22:
@@ -1868,5 +2026,61 @@ export class CPU {
     this.H_FLAG = false;
     this.C_FLAG = false;
     return result;
+  }
+
+  _executeRotateLeft(byte: u8, setZFlag: boolean = true) {
+    const MSB = getBitAtPos(byte, 7);
+    // shift left and move MSB bit to LSB
+    const newValue = (byte << 1) | MSB;
+
+    this.Z_FLAG = setZFlag ? newValue === 0 : false;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = Boolean(MSB);
+
+    return newValue;
+  }
+
+  _executeRotateLeftThroughCarry(byte: u8, setZFlag: boolean = true) {
+    const MSB = getBitAtPos(byte, 7);
+    // shift left and move C_FLAG to LSB bit
+    const newValue = (byte << 1) | Number(this.C_FLAG);
+
+    this.Z_FLAG = setZFlag ? newValue === 0 : false;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = Boolean(MSB);
+
+    return newValue;
+  }
+
+  _executeRotateRight(byte: u8, setZFlag: boolean = true) {
+    const LSB = getBitAtPos(byte, 0);
+    // shift right and move LSB bit to MSB
+    const newValue = setBitAtPos(byte >> 1, 7, LSB);
+
+    this.Z_FLAG = setZFlag ? newValue === 0 : false;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = Boolean(LSB);
+
+    return newValue;
+  }
+
+  _executeRotateRightThroughCarry(byte: u8, setZFlag: boolean = true) {
+    const LSB = getBitAtPos(byte, 0);
+    // shift right and move LSB bit to MSB
+    const newValue = setBitAtPos(byte >> 1, 7, Number(this.C_FLAG));
+
+    this.Z_FLAG = setZFlag ? newValue === 0 : false;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = Boolean(LSB);
+
+    return newValue;
+  }
+
+
+    return newValue;
   }
 }

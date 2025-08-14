@@ -38,3 +38,16 @@ export const u8ToBin = (dec: number): string =>
 // Turns a 16bit number to its binary representation
 export const u16ToBin = (dec: number): string =>
   (dec >>> 0).toString(2).padStart(16, "0");
+
+// Returns the value (1|0) of the nth bit of the provided number
+export const getBitAtPos = (value: number, pos: number): number =>
+  (value >> pos) & 0x01;
+// Sets the bit the at given position
+export const setBitAtPos = (
+  value: number,
+  pos: number,
+  bit: number
+): number => {
+  const mask = Math.pow(2, pos);
+  return bit === 1 ? value | mask : value & ~mask;
+};

@@ -3844,4 +3844,288 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
       expect(cpu.F & 0x0f).toBe(0x00); // Lower 4 bits should be 0 (unused in GB)
     });
   });
+
+  describe("0x07: RLCA (Rotate Left Circular A)", () => {
+    test("RLCA rotates A left with bit 7 going to carry and bit 0", () => {
+      const cpu = createCPUWithROM([0x07]); // RLCA only
+      cpu.A = 0x85; // 10000101
+      cpu.F = 0x00; // Clear all flags
+
+      cpu.tick(); // Execute RLCA
+
+      expect(cpu.A).toBe(0x0b); // 00001011 (rotated left)
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set (bit 7 was 1)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared (RLCA always clears Z)
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+    });
+
+    test("RLCA with bit 7 clear - carry flag cleared", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0x42; // 01000010
+      cpu.F = 0xf0; // All flags initially set
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x84); // 10000100 (rotated left)
+      expect(cpu.F & 0x10).toBe(0x00); // C flag cleared (bit 7 was 0)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+    });
+
+    test("RLCA with A = 0x00", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0x00; // 00000000
+      cpu.F = 0x90; // Z and C flags set
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x00); // 00000000 (remains zero)
+      expect(cpu.F & 0x10).toBe(0x00); // C flag cleared (bit 7 was 0)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared (RLCA always clears Z)
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F).toBe(0x00); // All flags cleared
+    });
+
+    test("RLCA with A = 0xFF", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0xff; // 11111111
+      cpu.F = 0x00;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xff); // 11111111 (remains same)
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set (bit 7 was 1)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F).toBe(0x10); // Only C flag set
+    });
+
+    test("RLCA with A = 0x80 (only bit 7 set)", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0x80; // 10000000
+      cpu.F = 0x60; // N and H flags set
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x01); // 00000001 (bit 7 moved to bit 0)
+      expect(cpu.F & 0x10).toBe(0x10); // C flag set (bit 7 was 1)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F).toBe(0x10); // Only C flag set
+    });
+
+    test("RLCA with A = 0x01 (only bit 0 set)", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0x01; // 00000001
+      cpu.F = 0x10; // C flag initially set
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x02); // 00000010 (shifted left)
+      expect(cpu.F & 0x10).toBe(0x00); // C flag cleared (bit 7 was 0)
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared
+      expect(cpu.F & 0x40).toBe(0x00); // N flag cleared
+      expect(cpu.F & 0x20).toBe(0x00); // H flag cleared
+      expect(cpu.F).toBe(0x00); // All flags cleared
+    });
+
+    test("RLCA always clears Z flag even when result is zero", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0x00;
+      cpu.F = 0x80; // Z flag set
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0x00); // Result is zero
+      expect(cpu.F & 0x80).toBe(0x00); // Z flag cleared (important!)
+      expect(cpu.F).toBe(0x00); // All flags cleared
+    });
+
+    test("RLCA flag behavior - always clears Z, N, H", () => {
+      const testCases = [
+        { A: 0x55, expectedA: 0xaa, expectedC: 0x00 }, // 01010101 -> 10101010
+        { A: 0xaa, expectedA: 0x55, expectedC: 0x10 }, // 10101010 -> 01010101
+        { A: 0x7f, expectedA: 0xfe, expectedC: 0x00 }, // 01111111 -> 11111110
+        { A: 0xfe, expectedA: 0xfd, expectedC: 0x10 }, // 11111110 -> 11111101
+      ];
+
+      testCases.forEach(({ A, expectedA, expectedC }) => {
+        const cpu = createCPUWithROM([0x07]);
+        cpu.A = A;
+        cpu.F = 0xf0; // All flags initially set
+
+        cpu.tick();
+
+        expect(cpu.A).toBe(expectedA);
+        expect(cpu.F & 0x10).toBe(expectedC); // C flag based on original bit 7
+        expect(cpu.F & 0x80).toBe(0x00); // Z always cleared
+        expect(cpu.F & 0x40).toBe(0x00); // N always cleared
+        expect(cpu.F & 0x20).toBe(0x00); // H always cleared
+      });
+    });
+
+    test("RLCA multiple rotations", () => {
+      const cpu = createCPUWithROM([0x07, 0x07, 0x07, 0x07]); // Four RLCA instructions
+      cpu.A = 0x81; // 10000001
+      cpu.F = 0x00;
+
+      // First rotation: 10000001 -> 00000011, C=1
+      cpu.tick();
+      expect(cpu.A).toBe(0x03);
+      expect(cpu.F & 0x10).toBe(0x10);
+
+      // Second rotation: 00000011 -> 00000110, C=0
+      cpu.tick();
+      expect(cpu.A).toBe(0x06);
+      expect(cpu.F & 0x10).toBe(0x00);
+
+      // Third rotation: 00000110 -> 00001100, C=0
+      cpu.tick();
+      expect(cpu.A).toBe(0x0c);
+      expect(cpu.F & 0x10).toBe(0x00);
+
+      // Fourth rotation: 00001100 -> 00011000, C=0
+      cpu.tick();
+      expect(cpu.A).toBe(0x18);
+      expect(cpu.F & 0x10).toBe(0x00);
+    });
+
+    test("RLCA eight rotations return to original", () => {
+      const cpu = createCPUWithROM([
+        0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+      ]);
+      const originalA = 0x93;
+      cpu.A = originalA;
+      cpu.F = 0x00;
+
+      // Execute 8 rotations (full circle)
+      for (let i = 0; i < 8; i++) {
+        cpu.tick();
+      }
+
+      expect(cpu.A).toBe(originalA); // Should return to original value
+    });
+
+    test("RLCA timing and PC increment", () => {
+      const cpu = createCPUWithROM([0x07]);
+      const initialPC = cpu.PC;
+      cpu.A = 0x42;
+
+      cpu.tick();
+
+      expect(cpu.PC).toBe(initialPC + 1); // PC should increment by 1
+      expect(cpu.A).toBe(0x84); // Rotated result
+      // RLCA takes 4 cycles - you might want to test this if you track cycles
+    });
+
+    test("RLCA does not affect other registers", () => {
+      const cpu = createCPUWithROM([0x07]);
+      cpu.A = 0x55;
+      cpu.B = 0x11;
+      cpu.C = 0x22;
+      cpu.D = 0x33;
+      cpu.E = 0x44;
+      cpu.H = 0x55;
+      cpu.L = 0x66;
+
+      cpu.tick();
+
+      expect(cpu.A).toBe(0xaa); // Only A should change
+      expect(cpu.B).toBe(0x11); // Other registers unchanged
+      expect(cpu.C).toBe(0x22);
+      expect(cpu.D).toBe(0x33);
+      expect(cpu.E).toBe(0x44);
+      expect(cpu.H).toBe(0x55);
+      expect(cpu.L).toBe(0x66);
+    });
+  });
+
+  test("0x17: RLA (Rotate A left through carry)", () => {
+    const cpu = createCPUWithROM([0x17]); // RLA
+    cpu.A = 0b10000000;
+    cpu.C_FLAG = false;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0b00000000);
+    expect(cpu.C_FLAG).toBe(true);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("0x0F: RRCA (Rotate A right)", () => {
+    const cpu = createCPUWithROM([0x0f]); // RRCA
+    cpu.A = 0b00000001;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0b10000000);
+    expect(cpu.C_FLAG).toBe(true);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("0x1F: RRA (Rotate A right through carry)", () => {
+    const cpu = createCPUWithROM([0x1f]); // RRA
+    cpu.A = 0b00000010;
+    cpu.C_FLAG = true;
+
+    cpu.tick();
+
+    expect(cpu.A).toBe(0b10000001);
+    expect(cpu.C_FLAG).toBe(false);
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("0xCB00: RLC B (Rotate B left)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x00]); // RLC B
+    cpu.B = 0b10000000;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b00000001);
+    expect(cpu.C_FLAG).toBe(true);
+    expect(cpu.Z_FLAG).toBe(false);
+  });
+
+  test("0xCB10: RL B (Rotate B left through carry)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x10]); // RL B
+    cpu.B = 0b01000000;
+    cpu.C_FLAG = true;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b10000001);
+    expect(cpu.C_FLAG).toBe(false);
+  });
+
+  test("0xCB08: RRC B (Rotate B right)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x08]); // RRC B
+    cpu.B = 0b00000001;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b10000000);
+    expect(cpu.C_FLAG).toBe(true);
+  });
+
+  test("0xCB18: RR B (Rotate B right through carry)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x18]); // RR B
+    cpu.B = 0b00000010;
+    cpu.C_FLAG = true;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b10000001);
+    expect(cpu.C_FLAG).toBe(false);
+  });
 });
