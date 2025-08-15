@@ -1597,25 +1597,91 @@ export class CPU {
         break;
 
       case 0x20:
+        // SLA B
+        this.B = this._executeShiftLeft(this.B);
+        break;
+
       case 0x21:
+        // SLA C
+        this.C = this._executeShiftLeft(this.C);
+        break;
+
       case 0x22:
+        // SLA D
+        this.D = this._executeShiftLeft(this.D);
+        break;
+
       case 0x23:
+        // SLA E
+        this.E = this._executeShiftLeft(this.E);
+        break;
+
       case 0x24:
+        // SLA H
+        this.H = this._executeShiftLeft(this.H);
+        break;
+
       case 0x25:
+        // SLA L
+        this.L = this._executeShiftLeft(this.L);
+        break;
+
       case 0x26:
+        // SLA (HB)
+        this._memory.writeByte(
+          this.HL,
+          this._executeShiftLeft(this._memory.readByte(this.HL))
+        );
+        break;
+
       case 0x27:
+        // SLA A
+        this.A = this._executeShiftLeft(this.A);
+        break;
+
       case 0x28:
+        // SRA B
+        this.B = this._executeShiftRight(this.B);
+        break;
+
       case 0x29:
+        // SRA C
+        this.C = this._executeShiftRight(this.C);
+        break;
+
       case 0x2a:
+        // SRA D
+        this.D = this._executeShiftRight(this.D);
+        break;
+
       case 0x2b:
+        // SRA E
+        this.E = this._executeShiftRight(this.E);
+        break;
 
       case 0x2c:
+        // SRA H
+        this.H = this._executeShiftRight(this.H);
+        break;
 
       case 0x2d:
+        // SRA L
+        this.L = this._executeShiftRight(this.L);
+        break;
 
       case 0x2e:
+        // SRA (HL)
+        this._memory.writeByte(
+          this.HL,
+          this._executeShiftRight(this._memory.readByte(this.HL))
+        );
+        break;
 
       case 0x2f:
+        // SRA A
+        this.A = this._executeShiftRight(this.A);
+        break;
+
       case 0x30:
         // SWAP B
         this.B = this._executeCbSwap(this.B);
@@ -1660,18 +1726,48 @@ export class CPU {
         break;
 
       case 0x38:
+        // SRL B
+        this.B = this._executeShiftRight(this.B, true);
+        break;
+
       case 0x39:
+        // SRL C
+        this.C = this._executeShiftRight(this.C, true);
+        break;
 
       case 0x3a:
+        // SRL D
+        this.D = this._executeShiftRight(this.D, true);
+        break;
 
       case 0x3b:
+        // SRL E
+        this.E = this._executeShiftRight(this.E, true);
+        break;
 
       case 0x3c:
+        // SRL H
+        this.H = this._executeShiftRight(this.H, true);
+        break;
+
       case 0x3d:
+        // SRL L
+        this.L = this._executeShiftRight(this.L, true);
+        break;
 
       case 0x3e:
+        // SRL (HL)
+        this._memory.writeByte(
+          this.HL,
+          this._executeShiftRight(this._memory.readByte(this.HL), true)
+        );
+        break;
 
       case 0x3f:
+        // SRL A
+        this.A = this._executeShiftRight(this.A, true);
+        break;
+
       case 0x40:
 
       case 0x41:
@@ -2080,6 +2176,29 @@ export class CPU {
     return newValue;
   }
 
+  _executeShiftLeft(byte: u8) {
+    const MSB = getBitAtPos(byte, 7);
+    // shift left and set LSB bit to 0
+    const newValue = (byte << 1) | 0;
+
+    this.Z_FLAG = newValue === 0;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = Boolean(MSB);
+
+    return newValue;
+  }
+
+  _executeShiftRight(byte: u8, setMSBToZero: boolean = false) {
+    const LSB = getBitAtPos(byte, 0);
+    const MSB = getBitAtPos(byte, 7);
+    // shift right and leave MSB unchanged
+    const newValue = setBitAtPos(byte >> 1, 7, setMSBToZero ? 0 : MSB);
+
+    this.Z_FLAG = newValue === 0;
+    this.N_FLAG = false;
+    this.H_FLAG = false;
+    this.C_FLAG = Boolean(LSB);
 
     return newValue;
   }

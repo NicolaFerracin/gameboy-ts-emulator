@@ -4128,4 +4128,54 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.B).toBe(0b10000001);
     expect(cpu.C_FLAG).toBe(false);
   });
+
+  test("0xCB20: SLA B (Shift Left Arithmetic)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x20]); // SLA B
+    cpu.B = 0b10000001;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b00000010);
+    expect(cpu.C_FLAG).toBe(true); // MSB was 1
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("0xCB28: SRA B (Shift Right Arithmetic)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x28]); // SRA B
+    cpu.B = 0b10000001;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b11000000); // MSB preserved
+    expect(cpu.C_FLAG).toBe(true); // LSB was 1
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("0xCB38: SRL B (Shift Right Logical)", () => {
+    const cpu = createCPUWithROM([0xcb, 0x38]); // SRL B
+    cpu.B = 0b10000001;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b01000000); // MSB becomes 0
+    expect(cpu.C_FLAG).toBe(true); // LSB was 1
+    expect(cpu.Z_FLAG).toBe(false);
+    expect(cpu.N_FLAG).toBe(false);
+    expect(cpu.H_FLAG).toBe(false);
+  });
+
+  test("0xCB38: SRL B results in zero", () => {
+    const cpu = createCPUWithROM([0xcb, 0x38]); // SRL B
+    cpu.B = 0b00000001;
+
+    cpu.tick();
+
+    expect(cpu.B).toBe(0b00000000);
+    expect(cpu.Z_FLAG).toBe(true);
+    expect(cpu.C_FLAG).toBe(true); // LSB was 1
+  });
 });
