@@ -4178,4 +4178,53 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(cpu.Z_FLAG).toBe(true);
     expect(cpu.C_FLAG).toBe(true); // LSB was 1
   });
+
+  describe("CB Prefix: BIT/SET/RES on B", () => {
+    for (let bit = 0; bit < 8; bit++) {
+      const bitMask = 1 << bit;
+      const bitOpcode = 0x40 | (bit << 3); // BIT b, B
+      const setOpcode = 0xc0 | (bit << 3); // SET b, B
+      const resOpcode = 0x80 | (bit << 3); // RES b, B
+
+      test(`0xCB${bitOpcode.toString(16)}: BIT ${bit}, B (bit is 0)`, () => {
+        const cpu = createCPUWithROM([0xcb, bitOpcode]);
+        cpu.B = 0x00; // all bits 0
+
+        cpu.tick();
+
+        expect(cpu.Z_FLAG).toBe(true);
+        expect(cpu.N_FLAG).toBe(false);
+        expect(cpu.H_FLAG).toBe(true);
+      });
+
+      test(`0xCB${bitOpcode.toString(16)}: BIT ${bit}, B (bit is 1)`, () => {
+        const cpu = createCPUWithROM([0xcb, bitOpcode]);
+        cpu.B = bitMask;
+
+        cpu.tick();
+
+        expect(cpu.Z_FLAG).toBe(false);
+        expect(cpu.N_FLAG).toBe(false);
+        expect(cpu.H_FLAG).toBe(true);
+      });
+
+      test(`0xCB${setOpcode.toString(16)}: SET ${bit}, B`, () => {
+        const cpu = createCPUWithROM([0xcb, setOpcode]);
+        cpu.B = 0x00;
+
+        cpu.tick();
+
+        expect(cpu.B & bitMask).not.toBe(0); // bit was set
+      });
+
+      test(`0xCB${resOpcode.toString(16)}: RES ${bit}, B`, () => {
+        const cpu = createCPUWithROM([0xcb, resOpcode]);
+        cpu.B = 0xff;
+
+        cpu.tick();
+
+        expect(cpu.B & bitMask).toBe(0); // bit was reset
+      });
+    }
+  });
 });
