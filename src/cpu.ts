@@ -160,6 +160,7 @@ export class CPU {
     return this._PC;
   }
   set PC(value: number) {
+    console.log("setting new value", value);
     this._PC = u16Mask(value);
   }
 
@@ -326,6 +327,11 @@ export class CPU {
         break;
 
       case 0x18:
+        // JR s8
+        // don't do PC++ because it doesn't work. +1 need to be done separately
+        this.PC += applySign(this._memory.readByte(this.PC)) + 1;
+        break;
+
       case 0x19:
         // ADD HL, DE
         this._u16ExecuteAdd(this.DE);
@@ -366,6 +372,10 @@ export class CPU {
         break;
 
       case 0x20:
+        // JR NZ, s8
+        this._executeConditionalRelativeJump(!this.Z_FLAG);
+        break;
+
       case 0x21:
         // LD HL, d16
         this.HL = u8Pair(
@@ -444,6 +454,10 @@ export class CPU {
         this.H_FLAG = false;
         break;
       case 0x28:
+        // JR Z, s8
+        this._executeConditionalRelativeJump(this.Z_FLAG);
+        break;
+
       case 0x29:
         // ADD HL, HL
         this._u16ExecuteAdd(this.HL);
@@ -486,6 +500,10 @@ export class CPU {
         break;
 
       case 0x30:
+        // JR NC, s8
+        this._executeConditionalRelativeJump(!this.C_FLAG);
+        break;
+
       case 0x31:
         // LD SP, d16
         this.SP = u8Pair(
@@ -520,6 +538,10 @@ export class CPU {
         break;
 
       case 0x38:
+        // JR C, s8
+        this._executeConditionalRelativeJump(this.C_FLAG);
+        break;
+
       case 0x39:
         // ADD HL, SP
         this._u16ExecuteAdd(this.SP);
@@ -1211,7 +1233,18 @@ export class CPU {
         break;
 
       case 0xc2:
+        // JP NZ, 16
+        this._executeConditionalJump(!this.Z_FLAG);
+        break;
+
       case 0xc3:
+        // JP a16
+        this.PC = u8Pair(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
+        break;
+
       case 0xc4:
       case 0xc5:
         // PUSH BC
@@ -1229,6 +1262,10 @@ export class CPU {
       case 0xc8:
       case 0xc9:
       case 0xca:
+        // JP Z, 16
+        this._executeConditionalJump(this.Z_FLAG);
+        break;
+
       case 0xcb:
         this.executeCbOpcode(this._memory.readByte(this.PC++));
         break;
@@ -1251,6 +1288,10 @@ export class CPU {
         break;
 
       case 0xd2:
+        // JP NC, 16
+        this._executeConditionalJump(!this.C_FLAG);
+        break;
+
       case 0xd3:
       case 0xd4:
       case 0xd5:
@@ -1269,6 +1310,10 @@ export class CPU {
       case 0xd8:
       case 0xd9:
       case 0xda:
+        // JP C, 16
+        this._executeConditionalJump(this.C_FLAG);
+        break;
+
       case 0xdb:
       case 0xdc:
       case 0xdd:
@@ -1327,6 +1372,10 @@ export class CPU {
         break;
 
       case 0xe9:
+        // JP HL
+        this.PC = this.HL;
+        break;
+
       case 0xea:
         // LD(a16), A;
         const ld_a16_addr = u8Pair(
@@ -2919,5 +2968,16 @@ export class CPU {
 
   _executeSetBit(byte: u8, pos: number, value: 1 | 0) {
     return setBitAtPos(byte, pos, value);
+  }
+
+  _executeConditionalJump(shouldJump: boolean) {
+    const lowByte = this._memory.readByte(this.PC++);
+    const highByte = this._memory.readByte(this.PC++);
+    if (shouldJump) this.PC = u8Pair(lowByte, highByte);
+  }
+
+  _executeConditionalRelativeJump(shouldJump: boolean) {
+    const s8 = applySign(this._memory.readByte(this.PC++));
+    if (shouldJump) this.PC += s8;
   }
 }

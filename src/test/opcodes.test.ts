@@ -4227,4 +4227,140 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
       });
     }
   });
+  test("0xC3: JP nn", () => {
+    const cpu = createCPUWithROM([0xc3, 0x34, 0x12]); // JP 0x1234
+    cpu.tick();
+    expect(cpu.PC).toBe(0x1234);
+  });
+
+  test("0xC2: JP NZ,nn - taken", () => {
+    const cpu = createCPUWithROM([0xc2, 0x34, 0x12]);
+    cpu.Z_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x1234);
+  });
+
+  test("0xC2: JP NZ,nn - not taken", () => {
+    const cpu = createCPUWithROM([0xc2, 0x34, 0x12]);
+    cpu.Z_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xCA: JP Z,nn - taken", () => {
+    const cpu = createCPUWithROM([0xca, 0x34, 0x12]);
+    cpu.Z_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x1234);
+  });
+
+  test("0xCA: JP Z,nn - not taken", () => {
+    const cpu = createCPUWithROM([0xca, 0x34, 0x12]);
+    cpu.Z_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xD2: JP NC,nn - taken", () => {
+    const cpu = createCPUWithROM([0xd2, 0x34, 0x12]);
+    cpu.C_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x1234);
+  });
+
+  test("0xD2: JP NC,nn - not taken", () => {
+    const cpu = createCPUWithROM([0xd2, 0x34, 0x12]);
+    cpu.C_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xDA: JP C,nn - taken", () => {
+    const cpu = createCPUWithROM([0xda, 0x34, 0x12]);
+    cpu.C_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x1234);
+  });
+
+  test("0xDA: JP C,nn - not taken", () => {
+    const cpu = createCPUWithROM([0xda, 0x34, 0x12]);
+    cpu.C_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xE9: JP HL", () => {
+    const cpu = createCPUWithROM([0xe9]);
+    cpu.HL = 0x1234;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x1234);
+  });
+
+  test("0x18: JR n (forward)", () => {
+    const cpu = createCPUWithROM([0x18, 0x05]); // JR +5
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002 + 0x05);
+  });
+
+  test("0x18: JR n (backward)", () => {
+    const cpu = createCPUWithROM([0x18, 0xfb]); // JR -5
+    cpu.tick();
+    expect(cpu.PC).toBe((0x0002 - 5) & 0xffff);
+  });
+
+  test("0x20: JR NZ,n - taken", () => {
+    const cpu = createCPUWithROM([0x20, 0x05]); // JR NZ, +5
+    cpu.Z_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002 + 0x05);
+  });
+
+  test("0x20: JR NZ,n - not taken", () => {
+    const cpu = createCPUWithROM([0x20, 0x05]);
+    cpu.Z_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002);
+  });
+
+  test("0x28: JR Z,n - taken", () => {
+    const cpu = createCPUWithROM([0x28, 0x05]);
+    cpu.Z_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002 + 0x05);
+  });
+
+  test("0x28: JR Z,n - not taken", () => {
+    const cpu = createCPUWithROM([0x28, 0x05]);
+    cpu.Z_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002);
+  });
+
+  test("0x30: JR NC,n - taken", () => {
+    const cpu = createCPUWithROM([0x30, 0x05]);
+    cpu.C_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002 + 0x05);
+  });
+
+  test("0x30: JR NC,n - not taken", () => {
+    const cpu = createCPUWithROM([0x30, 0x05]);
+    cpu.C_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002);
+  });
+
+  test("0x38: JR C,n - taken", () => {
+    const cpu = createCPUWithROM([0x38, 0x05]);
+    cpu.C_FLAG = true;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002 + 0x05);
+  });
+
+  test("0x38: JR C,n - not taken", () => {
+    const cpu = createCPUWithROM([0x38, 0x05]);
+    cpu.C_FLAG = false;
+    cpu.tick();
+    expect(cpu.PC).toBe(0x0002);
+  });
 });
