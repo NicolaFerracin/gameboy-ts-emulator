@@ -1262,6 +1262,10 @@ export class CPU {
         break;
 
       case 0xc7:
+        // RST 0
+        this._executeReset(0x00);
+        break;
+
       case 0xc8:
       case 0xc9:
       case 0xca:
@@ -1302,6 +1306,10 @@ export class CPU {
         break;
 
       case 0xcf:
+        // RST 1
+        this._executeReset(0x08);
+        break;
+
       case 0xd0:
       case 0xd1:
         // POP DE
@@ -1335,6 +1343,10 @@ export class CPU {
         break;
 
       case 0xd7:
+        // RST 2
+        this._executeReset(0x10);
+        break;
+
       case 0xd8:
       case 0xd9:
       case 0xda:
@@ -1355,6 +1367,10 @@ export class CPU {
         break;
 
       case 0xdf:
+        // RST 3
+        this._executeReset(0x18);
+        break;
+
       case 0xe0:
         // LD (a8), A
         this._memory.writeByte(
@@ -1391,6 +1407,10 @@ export class CPU {
         break;
 
       case 0xe7:
+        // RST 4
+        this._executeReset(0x20);
+        break;
+
       case 0xe8:
         // ADD SP, s8
         const add_sp_s8 = this._memory.readByte(this.PC++);
@@ -1426,6 +1446,10 @@ export class CPU {
         break;
 
       case 0xef:
+        // RST 5
+        this._executeReset(0x28);
+        break;
+
       case 0xf0:
         // LD A, (a8)
         const ld_a_a8 = this._memory.readByte(this.PC++);
@@ -1460,6 +1484,10 @@ export class CPU {
         break;
 
       case 0xf7:
+        // RST 6
+        this._executeReset(0x30);
+        break;
+
       case 0xf8:
         // LD HL, SP+s8
         const ld_hl_s8 = this._memory.readByte(this.PC++);
@@ -1495,6 +1523,9 @@ export class CPU {
         break;
 
       case 0xff:
+        // RST 6
+        this._executeReset(0x38);
+        break;
 
       default:
         throw new Error(`Unknown opcode 0x${numToHex(opcode)}`);
@@ -3022,12 +3053,19 @@ export class CPU {
 
     if (shouldCall) {
       // PC to SP
-      const [call_a16_low, call_a16_high] = u16Unpair(this.PC);
-      this._memory.writeByte(--this.SP, call_a16_high);
-      this._memory.writeByte(--this.SP, call_a16_low);
+      const [LSB, MSB] = u16Unpair(this.PC);
+      this._memory.writeByte(--this.SP, MSB);
+      this._memory.writeByte(--this.SP, LSB);
 
       // PC to a16
       this.PC = a16;
     }
+  }
+
+  _executeReset(low: number) {
+    const [LSB, MSB] = u16Unpair(this.PC);
+    this._memory.writeByte(--this.SP, MSB);
+    this._memory.writeByte(--this.SP, LSB);
+    this.PC = u8Pair(low, 0x00);
   }
 }

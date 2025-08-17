@@ -4425,7 +4425,6 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect(returnAddr).toBe(0x0003);
   });
 
-
   test("0xD4: CALL NC, nn (condition false)", () => {
     const cpu = createCPUWithROM([0xd4, 0x00, 0x80]); // CALL NC, $8000
     cpu.C_FLAG = true; // C flag set → NC condition false
@@ -4518,4 +4517,107 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect((high << 8) | low).toBe(0x0003);
   });
 
+  test("0xC7: RST 00H", () => {
+    const cpu = createCPUWithROM([0xc7]); // RST 00H
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001); // return address is next instruction
+    expect(cpu.PC).toBe(0x00);
+  });
+
+  test("0xCF: RST 08H", () => {
+    const cpu = createCPUWithROM([0xcf]); // RST 08H
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x08);
+  });
+
+  test("0xD7: RST 10H", () => {
+    const cpu = createCPUWithROM([0xd7]);
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x10);
+  });
+
+  test("0xDF: RST 18H", () => {
+    const cpu = createCPUWithROM([0xdf]);
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x18);
+  });
+
+  test("0xE7: RST 20H", () => {
+    const cpu = createCPUWithROM([0xe7]);
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x20);
+  });
+
+  test("0xEF: RST 28H", () => {
+    const cpu = createCPUWithROM([0xef]);
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x28);
+  });
+
+  test("0xF7: RST 30H", () => {
+    const cpu = createCPUWithROM([0xf7]);
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x30);
+  });
+
+  test("0xFF: RST 38H", () => {
+    const cpu = createCPUWithROM([0xff]);
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.SP).toBe(0xfffc);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    expect((high << 8) | low).toBe(0x0001);
+    expect(cpu.PC).toBe(0x38);
+  });
 });
