@@ -1223,6 +1223,10 @@ export class CPU {
         break;
 
       case 0xc0:
+        // RET NZ
+        this._executeReturn(!this.Z_FLAG);
+        break;
+
       case 0xc1:
         // POP BC
         this.BC = u8Pair(
@@ -1267,7 +1271,15 @@ export class CPU {
         break;
 
       case 0xc8:
+        // RET Z
+        this._executeReturn(this.Z_FLAG);
+        break;
+
       case 0xc9:
+        // RET
+        this._executeReturn(true);
+        break;
+
       case 0xca:
         // JP Z, 16
         this._executeConditionalJump(this.Z_FLAG);
@@ -1311,6 +1323,10 @@ export class CPU {
         break;
 
       case 0xd0:
+        // RET NC
+        this._executeReturn(!this.C_FLAG);
+        break;
+
       case 0xd1:
         // POP DE
         this.DE = u8Pair(
@@ -1348,7 +1364,16 @@ export class CPU {
         break;
 
       case 0xd8:
+        // RET C
+        this._executeReturn(this.C_FLAG);
+        break;
+
       case 0xd9:
+        // RETI
+        this._executeReturn(true);
+        // TODO ENABLE INTERRUPT
+        break;
+
       case 0xda:
         // JP C, 16
         this._executeConditionalJump(this.C_FLAG);
@@ -3067,5 +3092,14 @@ export class CPU {
     this._memory.writeByte(--this.SP, MSB);
     this._memory.writeByte(--this.SP, LSB);
     this.PC = u8Pair(low, 0x00);
+  }
+
+  _executeReturn(shouldReturn: boolean) {
+    if (shouldReturn) {
+      this.PC = u8Pair(
+        this._memory.readByte(this.SP++),
+        this._memory.readByte(this.SP++)
+      );
+    }
   }
 }

@@ -4620,4 +4620,105 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     expect((high << 8) | low).toBe(0x0001);
     expect(cpu.PC).toBe(0x38);
   });
+
+  test("0xC9: RET", () => {
+    const cpu = createCPUWithROM([0xc9]); // RET
+    cpu.SP = 0xfffc;
+    (cpu as any)._memory.writeByte(0xfffc, 0x34); // low byte
+    (cpu as any)._memory.writeByte(0xfffd, 0x12); // high byte
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x1234);
+    expect(cpu.SP).toBe(0xfffe);
+  });
+
+  test("0xD9: RETI (return from interrupt)", () => {
+    const cpu = createCPUWithROM([0xd9]); // RETI
+    cpu.SP = 0xfffc;
+    (cpu as any)._memory.writeByte(0xfffc, 0xcd);
+    (cpu as any)._memory.writeByte(0xfffd, 0xab);
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0xabcd);
+    expect(cpu.SP).toBe(0xfffe);
+    // Optionally, assert interrupt enable flag was set, if you model it
+    // expect(cpu.interruptsEnabled).toBe(true);
+  });
+
+  // Conditional returns
+  test("0xC0: RET NZ (Z = false)", () => {
+    const cpu = createCPUWithROM([0xc0]);
+    cpu.Z_FLAG = false;
+    cpu.SP = 0xfffc;
+    (cpu as any)._memory.writeByte(0xfffc, 0x78);
+    (cpu as any)._memory.writeByte(0xfffd, 0x56);
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x5678);
+    expect(cpu.SP).toBe(0xfffe);
+  });
+
+  test("0xC0: RET NZ (Z = true, no return)", () => {
+    const cpu = createCPUWithROM([0xc0]);
+    cpu.Z_FLAG = true;
+    cpu.SP = 0xfffc;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x0001); // Moved to next instruction
+    expect(cpu.SP).toBe(0xfffc); // Stack untouched
+  });
+
+  test("0xC8: RET Z (Z = true)", () => {
+    const cpu = createCPUWithROM([0xc8]);
+    cpu.Z_FLAG = true;
+    cpu.SP = 0xfffc;
+    (cpu as any)._memory.writeByte(0xfffc, 0xaa);
+    (cpu as any)._memory.writeByte(0xfffd, 0xbb);
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0xbbaa);
+    expect(cpu.SP).toBe(0xfffe);
+  });
+
+  test("0xC8: RET Z (Z = false, no return)", () => {
+    const cpu = createCPUWithROM([0xc8]);
+    cpu.Z_FLAG = false;
+    cpu.SP = 0xfffc;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x0001);
+    expect(cpu.SP).toBe(0xfffc);
+  });
+
+  test("0xD0: RET NC (C = false)", () => {
+    const cpu = createCPUWithROM([0xd0]);
+    cpu.C_FLAG = false;
+    cpu.SP = 0xfffc;
+    (cpu as any)._memory.writeByte(0xfffc, 0x44);
+    (cpu as any)._memory.writeByte(0xfffd, 0x33);
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x3344);
+    expect(cpu.SP).toBe(0xfffe);
+  });
+
+  test("0xD8: RET C (C = true)", () => {
+    const cpu = createCPUWithROM([0xd8]);
+    cpu.C_FLAG = true;
+    cpu.SP = 0xfffc;
+    (cpu as any)._memory.writeByte(0xfffc, 0x22);
+    (cpu as any)._memory.writeByte(0xfffd, 0x11);
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x1122);
+    expect(cpu.SP).toBe(0xfffe);
+  });
 });
