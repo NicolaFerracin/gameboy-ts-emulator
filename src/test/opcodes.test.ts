@@ -4363,4 +4363,159 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
     cpu.tick();
     expect(cpu.PC).toBe(0x0002);
   });
+
+  test("0xCD: CALL nn pushes PC to stack and jumps", () => {
+    const cpu = createCPUWithROM([0xcd, 0x34, 0x12]); // CALL 0x1234
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    // After CALL, PC should be 0x1234
+    expect(cpu.PC).toBe(0x1234);
+
+    // PC that was pushed: next instruction after CALL (which is at address 0x0003)
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const returnAddr = (high << 8) | low;
+    expect(returnAddr).toBe(0x0003);
+
+    // SP should now point to 0xfffc (after pushing 2 bytes)
+    expect(cpu.SP).toBe(0xfffc);
+  });
+
+  test("0xCD: CALL nn at non-zero PC", () => {
+    const cpu = createCPUWithROM([
+      0x00,
+      0x00,
+      0x00, // Some NOPs
+      0xcd,
+      0x78,
+      0x56, // CALL 0x5678 at PC=0x0003
+    ]);
+
+    cpu.PC = 0x0003;
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    // Jumped correctly
+    expect(cpu.PC).toBe(0x5678);
+
+    // Return address pushed is 0x0006
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    const returnAddr = (high << 8) | low;
+    expect(returnAddr).toBe(0x0006);
+
+    expect(cpu.SP).toBe(0xfffc);
+  });
+
+  test("0xCD: CALL nn from edge SP", () => {
+    const cpu = createCPUWithROM([0xcd, 0x00, 0x80]); // CALL 0x8000
+    cpu.SP = 0x0002;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x8000);
+    expect(cpu.SP).toBe(0x0000);
+
+    const high = (cpu as any)._memory.readByte(0x0001);
+    const low = (cpu as any)._memory.readByte(0x0000);
+    const returnAddr = (high << 8) | low;
+    expect(returnAddr).toBe(0x0003);
+  });
+
+
+  test("0xD4: CALL NC, nn (condition false)", () => {
+    const cpu = createCPUWithROM([0xd4, 0x00, 0x80]); // CALL NC, $8000
+    cpu.C_FLAG = true; // C flag set → NC condition false
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x0003); // Just skip the instruction
+  });
+
+  test("0xD4: CALL NC, nn (condition true)", () => {
+    const cpu = createCPUWithROM([0xd4, 0x00, 0x80]); // CALL NC, $8000
+    cpu.C_FLAG = false;
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x8000);
+    expect(cpu.SP).toBe(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    expect((high << 8) | low).toBe(0x0003);
+  });
+
+  test("0xDC: CALL C, nn (condition false)", () => {
+    const cpu = createCPUWithROM([0xdc, 0x00, 0x80]); // CALL C, $8000
+    cpu.C_FLAG = false;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xDC: CALL C, nn (condition true)", () => {
+    const cpu = createCPUWithROM([0xdc, 0x00, 0x80]); // CALL C, $8000
+    cpu.C_FLAG = true;
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x8000);
+    expect(cpu.SP).toBe(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    expect((high << 8) | low).toBe(0x0003);
+  });
+
+  test("0xC4: CALL NZ, nn (condition false)", () => {
+    const cpu = createCPUWithROM([0xc4, 0x00, 0x80]); // CALL NZ, $8000
+    cpu.Z_FLAG = true;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xC4: CALL NZ, nn (condition true)", () => {
+    const cpu = createCPUWithROM([0xc4, 0x00, 0x80]); // CALL NZ, $8000
+    cpu.Z_FLAG = false;
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x8000);
+    expect(cpu.SP).toBe(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    expect((high << 8) | low).toBe(0x0003);
+  });
+
+  test("0xCC: CALL Z, nn (condition false)", () => {
+    const cpu = createCPUWithROM([0xcc, 0x00, 0x80]); // CALL Z, $8000
+    cpu.Z_FLAG = false;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x0003);
+  });
+
+  test("0xCC: CALL Z, nn (condition true)", () => {
+    const cpu = createCPUWithROM([0xcc, 0x00, 0x80]); // CALL Z, $8000
+    cpu.Z_FLAG = true;
+    cpu.SP = 0xfffe;
+
+    cpu.tick();
+
+    expect(cpu.PC).toBe(0x8000);
+    expect(cpu.SP).toBe(0xfffc);
+    const high = (cpu as any)._memory.readByte(0xfffd);
+    const low = (cpu as any)._memory.readByte(0xfffc);
+    expect((high << 8) | low).toBe(0x0003);
+  });
+
 });

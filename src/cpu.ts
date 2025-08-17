@@ -160,7 +160,6 @@ export class CPU {
     return this._PC;
   }
   set PC(value: number) {
-    console.log("setting new value", value);
     this._PC = u16Mask(value);
   }
 
@@ -1246,6 +1245,10 @@ export class CPU {
         break;
 
       case 0xc4:
+        // CALL NZ, a16
+        this._executeConditionalCall(!this.Z_FLAG);
+        break;
+
       case 0xc5:
         // PUSH BC
         const [push_bc_low, push_bc_high] = u16Unpair(this.BC);
@@ -1271,7 +1274,28 @@ export class CPU {
         break;
 
       case 0xcc:
+        // CALL Z, a16
+        this._executeConditionalCall(this.Z_FLAG);
+        break;
+
       case 0xcd:
+        // CALL a16
+        // a16 from PC
+        const a16 = u8Pair(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
+
+        // PC to SP
+        const [call_a16_low, call_a16_high] = u16Unpair(this.PC);
+        this._memory.writeByte(--this.SP, call_a16_high);
+        this._memory.writeByte(--this.SP, call_a16_low);
+
+        // PC to a16
+        this.PC = a16;
+
+        break;
+
       case 0xce:
         // ADC A, d8
         this._u8ExecuteAdd(this._memory.readByte(this.PC++), +this.C_FLAG);
@@ -1294,6 +1318,10 @@ export class CPU {
 
       case 0xd3:
       case 0xd4:
+        // CALL NC, a16
+        this._executeConditionalCall(!this.C_FLAG);
+        break;
+
       case 0xd5:
         // PUSH DE
         const [push_de_low, push_de_high] = u16Unpair(this.DE);
@@ -1316,6 +1344,10 @@ export class CPU {
 
       case 0xdb:
       case 0xdc:
+        // CALL C, a16
+        this._executeConditionalCall(this.C_FLAG);
+        break;
+
       case 0xdd:
       case 0xde:
         // SBC A, d8
@@ -2979,5 +3011,23 @@ export class CPU {
   _executeConditionalRelativeJump(shouldJump: boolean) {
     const s8 = applySign(this._memory.readByte(this.PC++));
     if (shouldJump) this.PC += s8;
+  }
+
+  _executeConditionalCall(shouldCall: boolean) {
+    // a16 from PC
+    const a16 = u8Pair(
+      this._memory.readByte(this.PC++),
+      this._memory.readByte(this.PC++)
+    );
+
+    if (shouldCall) {
+      // PC to SP
+      const [call_a16_low, call_a16_high] = u16Unpair(this.PC);
+      this._memory.writeByte(--this.SP, call_a16_high);
+      this._memory.writeByte(--this.SP, call_a16_low);
+
+      // PC to a16
+      this.PC = a16;
+    }
   }
 }
