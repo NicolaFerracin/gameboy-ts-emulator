@@ -1,9 +1,10 @@
 import { CPU } from "../cpu";
 import { Memory } from "../memory";
+import { PPU } from "../ppu";
 
 function createCPUWithROM(rom: number[]): CPU {
   const memory = new Memory(new Uint8Array(0x8000).map((_, i) => rom[i] ?? 0));
-  const cpu = new CPU(memory);
+  const cpu = new CPU(memory, new PPU());
   return cpu;
 }
 

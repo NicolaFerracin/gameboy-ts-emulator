@@ -1,4 +1,5 @@
 import type { Memory } from "./memory";
+import { PPU } from "./ppu.ts";
 import { u16, u8 } from "./types";
 import {
   applyMask,
@@ -27,11 +28,12 @@ export class CPU {
   private _L: u8 = 0;
   private _PC: u16 = 0;
   private _SP: u16 = 0;
-  private _IR: u16 = 0;
-  private _IE: u16 = 0;
   private _memory: Memory;
+  private _ppu: PPU;
   private isHalted: boolean; // Stops the System Clock
   private isStopped: boolean; // Stops both the System Clock and Oscillator Circuit
+  private IME: boolean; // Interrupt Master Enable
+  private imeEnableDelay: number; // Countdown to enable the IME switch
 
   get A(): u8 {
     return this._A;
@@ -170,10 +172,13 @@ export class CPU {
     this._SP = u16Mask(value);
   }
 
-  constructor(memory: Memory) {
+  constructor(memory: Memory, ppu: PPU) {
     this._memory = memory;
+    this._ppu = ppu;
     this.isHalted = false;
     this.isStopped = false;
+    this.IME = false;
+    this.imeEnableDelay = 0;
   }
 
   tick() {
@@ -184,7 +189,23 @@ export class CPU {
     this.PC++;
 
     // Execute OPCODE
-    const cyclesTaken = this.executeOpcode(opcode) * 4; // we are using a reference table that uses a different unit
+    const cyclesTaken = this.executeOpcode(opcode); // we are using a reference table that uses a M cycles instead of T cycles
+
+    // Advance PPU
+    this._ppu.advance(cyclesTaken);
+
+    // Handle HALT sequence
+    while (this.isHalted) {
+      this._ppu.advance(1);
+      const pending = this._memory.getIE() & this._memory.getIF();
+      if (pending !== 0) this.isHalted = false;
+    }
+
+    // Handle IME delay
+    if (opcode !== 0xfb && this.imeEnableDelay > 0) {
+      this.imeEnableDelay--;
+      if (this.imeEnableDelay === 0) this.IME = true;
+    }
   }
 
   executeOpcode(opcode: u8) {
@@ -1391,7 +1412,7 @@ export class CPU {
       case 0xd9:
         // RETI
         this._executeReturn(true);
-        // TODO ENABLE INTERRUPT
+        this.IME = true;
         // ignore cycles returned by the helper function, we have a different value here
         return 4;
 
@@ -1514,7 +1535,8 @@ export class CPU {
         return 2;
 
       case 0xf3:
-        // TODO implement
+        // DI
+        this.IME = false;
         return 1;
 
       case 0xf4:
@@ -1562,7 +1584,8 @@ export class CPU {
         return 4;
 
       case 0xfb:
-        // TODO IMPLEMENT
+        // EI
+        this.imeEnableDelay = 1;
         return 1;
 
       case 0xfc:

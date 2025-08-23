@@ -1,11 +1,12 @@
 import { CPU } from "../cpu.ts";
 import { Memory } from "../memory.ts";
+import { PPU } from "../ppu.ts";
 
 describe("CPU Register Access", () => {
   let cpu: CPU;
 
   beforeEach(() => {
-    cpu = new CPU(new Memory(new Uint8Array()));
+    cpu = new CPU(new Memory(new Uint8Array()), new PPU());
   });
 
   test("8-bit register masking (A)", () => {

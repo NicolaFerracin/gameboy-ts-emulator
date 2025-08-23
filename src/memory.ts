@@ -1,3 +1,4 @@
+import { INTERRUPT_ENABLE_ADDR, INTERRUPT_FLAG_ADDR } from "./constants.ts";
 import { u16, u8 } from "./types";
 
 export class Memory {
@@ -25,5 +26,13 @@ export class Memory {
 
   disableReadFromBoot() {
     this.isBiosEnabled = false;
+  }
+
+  getIE() {
+    return this.mem[INTERRUPT_ENABLE_ADDR];
+  }
+
+  getIF() {
+    return this.mem[INTERRUPT_FLAG_ADDR];
   }
 }
