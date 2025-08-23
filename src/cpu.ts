@@ -184,7 +184,7 @@ export class CPU {
     this.PC++;
 
     // Execute OPCODE
-    this.executeOpcode(opcode);
+    const cyclesTaken = this.executeOpcode(opcode) * 4; // we are using a reference table that uses a different unit
   }
 
   executeOpcode(opcode: u8) {
@@ -193,7 +193,7 @@ export class CPU {
     switch (opcode) {
       case 0x00:
         // NOP
-        break;
+        return 1;
 
       case 0x01:
         // LD BC, d16
@@ -201,13 +201,17 @@ export class CPU {
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
-        break;
+        return 3;
 
       case 0x02:
+        // LD (BC), A
+        this._memory.writeByte(this.BC, this.A);
+        return 2;
+
       case 0x03:
         // INC BC
         this.BC++;
-        break;
+        return 2;
 
       case 0x04:
         // INC B
@@ -216,24 +220,24 @@ export class CPU {
         this.H_FLAG = u8HalfCarryMask(this.B++) + 1 > 0x0f;
         this.Z_FLAG = this.B === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x05:
         // DEC B
         this.H_FLAG = u8HalfCarryMask(this.B--) === 0x00;
         this.Z_FLAG = this.B === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x06:
         // LD B, d8
         this.B = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x07:
         // RLCA
         this.A = this._executeRotateLeft(this.A, false);
-        break;
+        return 1;
 
       case 0x08:
         // LD (a16), SP
@@ -241,51 +245,51 @@ export class CPU {
         const [ld_a6_low, ld_a6_high] = u16Unpair(this.SP);
         this._memory.writeByte(ld_a6_addr, ld_a6_low);
         this._memory.writeByte(u8Mask(ld_a6_addr + 1), ld_a6_high);
-        break;
+        return 5;
 
       case 0x09:
         // ADD HL, BC
         this._u16ExecuteAdd(this.BC);
-        break;
+        return 2;
 
       case 0x0a:
         // LD A, (BC)
         this.A = this._memory.readByte(this.BC);
-        break;
+        return 2;
 
       case 0x0b:
         // DEC BC
         this.BC--;
-        break;
+        return 2;
 
       case 0x0c:
         // INC C
         this.H_FLAG = u8HalfCarryMask(this.C++) + 1 > 0x0f;
         this.Z_FLAG = this.C === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x0d:
         // DEC C
         this.H_FLAG = u8HalfCarryMask(this.C--) === 0x00;
         this.Z_FLAG = this.C === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x0e:
         // LD C, d8
         this.C = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x0f:
         // RRCA
         this.A = this._executeRotateRight(this.A, false);
-        break;
+        return 1;
 
       case 0x10:
         // STOP
         this.isStopped = true;
-        break;
+        return 1;
 
       case 0x11:
         // LD DE, d16
@@ -293,87 +297,90 @@ export class CPU {
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
-        break;
+        return 3;
 
       case 0x12:
+        // LD (DE), A
+        this._memory.writeByte(this.DE, this.A);
+        return 2;
+
       case 0x13:
         // INC DE
         this.DE++;
-        break;
+        return 2;
 
       case 0x14:
         // INC D
         this.H_FLAG = u8HalfCarryMask(this.D++) + 1 > 0x0f;
         this.Z_FLAG = this.D === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x15:
         // DEC D
         this.H_FLAG = u8HalfCarryMask(this.D--) === 0x00;
         this.Z_FLAG = this.D === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x16:
         // LD D, d8
         this.D = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x17:
         // RLA
         this.A = this._executeRotateLeftThroughCarry(this.A, false);
-        break;
+        return 1;
 
       case 0x18:
         // JR s8
         // don't do PC++ because it doesn't work. +1 need to be done separately
         this.PC += applySign(this._memory.readByte(this.PC)) + 1;
-        break;
+        return 3;
 
       case 0x19:
         // ADD HL, DE
         this._u16ExecuteAdd(this.DE);
-        break;
+        return 2;
 
       case 0x1a:
         // LD A, (DE)
         this.A = this._memory.readByte(this.DE);
-        break;
+        return 2;
 
       case 0x1b:
         // DEC DE
         this.DE--;
-        break;
+        return 2;
 
       case 0x1c:
         // INC E
         this.H_FLAG = u8HalfCarryMask(this.E++) + 1 > 0x0f;
         this.Z_FLAG = this.E === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x1d:
         // DEC E
         this.H_FLAG = u8HalfCarryMask(this.E--) === 0x00;
         this.Z_FLAG = this.E === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x1e:
         // LD E, d8
         this.E = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x1f:
         // RRA
         this.A = this._executeRotateRightThroughCarry(this.A, false);
-        break;
+        return 1;
 
       case 0x20:
         // JR NZ, s8
-        this._executeConditionalRelativeJump(!this.Z_FLAG);
-        break;
+        return this._executeConditionalRelativeJump(!this.Z_FLAG);
 
       case 0x21:
         // LD HL, d16
@@ -381,36 +388,36 @@ export class CPU {
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
-        break;
+        return 3;
 
       case 0x22:
         // LD (HL+), A
         this._memory.writeByte(this.HL++, this.A);
-        break;
+        return 2;
 
       case 0x23:
         // INC HL
         this.HL++;
-        break;
+        return 2;
 
       case 0x24:
         // INC H
         this.H_FLAG = u8HalfCarryMask(this.H++) + 1 > 0x0f;
         this.Z_FLAG = this.H === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x25:
         // DEC H
         this.H_FLAG = u8HalfCarryMask(this.H--) === 0x00;
         this.Z_FLAG = this.H === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x26:
         // LD H, d8
         this.H = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x27:
         // DAA
@@ -451,57 +458,56 @@ export class CPU {
 
         this.Z_FLAG = this.A === 0;
         this.H_FLAG = false;
-        break;
+        return 1;
+
       case 0x28:
         // JR Z, s8
-        this._executeConditionalRelativeJump(this.Z_FLAG);
-        break;
+        return this._executeConditionalRelativeJump(this.Z_FLAG);
 
       case 0x29:
         // ADD HL, HL
         this._u16ExecuteAdd(this.HL);
-        break;
+        return 2;
 
       case 0x2a:
         // LD A, (HL+)
         this.A = this._memory.readByte(this.HL++);
-        break;
+        return 2;
 
       case 0x2b:
         // DEC HL
         this.HL--;
-        break;
+        return 2;
 
       case 0x2c:
         // INC L
         this.H_FLAG = u8HalfCarryMask(this.L++) + 1 > 0x0f;
         this.Z_FLAG = this.L === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x2d:
         // DEC L
         this.H_FLAG = u8HalfCarryMask(this.L--) === 0x00;
         this.Z_FLAG = this.L === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x2e:
         // LD L, d8
         this.L = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x2f:
         // CPL
         this.A = ~this.A;
         this.N_FLAG = true;
         this.H_FLAG = true;
-        break;
+        return 1;
 
       case 0x30:
         // JR NC, s8
-        this._executeConditionalRelativeJump(!this.C_FLAG);
-        break;
+        return this._executeConditionalRelativeJump(!this.C_FLAG);
 
       case 0x31:
         // LD SP, d16
@@ -509,723 +515,736 @@ export class CPU {
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
-        break;
+        return 3;
 
       case 0x32:
         // LD (HL-), A
         this._memory.writeByte(this.HL--, this.A);
-        break;
+        return 2;
 
       case 0x33:
         // INC SP
         this.SP++;
-        break;
+        return 2;
 
       case 0x34:
+        // INC (HL)
+        const inc_hl_prev = this._memory.readByte(this.HL);
+        this.H_FLAG = u8HalfCarryMask(inc_hl_prev) + 1 > 0x0f;
+        this.Z_FLAG = this.H === 0;
+        this.N_FLAG = false;
+        this._memory.writeByte(this.HL, u8Mask(inc_hl_prev + 1));
+        return 3;
+
       case 0x35:
+        // DEC (HL)
+        const dec_hl_prev = this._memory.readByte(this.HL);
+        this.H_FLAG = u8HalfCarryMask(this.H--) === 0x00;
+        this.Z_FLAG = this.H === 0;
+        this.N_FLAG = true;
+        return 3;
+
       case 0x36:
         // LD (HL), d8
         const value = this._memory.readByte(this.PC++);
         this._memory.writeByte(this.HL, value);
-        break;
+        return 3;
 
       case 0x37:
         // SCF
         this.C_FLAG = true;
         this.N_FLAG = false;
         this.H_FLAG = false;
-        break;
+        return 1;
 
       case 0x38:
         // JR C, s8
-        this._executeConditionalRelativeJump(this.C_FLAG);
-        break;
+        return this._executeConditionalRelativeJump(this.C_FLAG);
 
       case 0x39:
         // ADD HL, SP
         this._u16ExecuteAdd(this.SP);
-        break;
+        return 2;
 
       case 0x3a:
         // LD A, (HL-)
         this.A = this._memory.readByte(this.HL--);
-        break;
+        return 2;
 
       case 0x3b:
         // DEC SP
         this.SP--;
-        break;
+        return 2;
 
       case 0x3c:
         // INC A
         this.H_FLAG = u8HalfCarryMask(this.A++) + 1 > 0x0f;
         this.Z_FLAG = this.A === 0;
         this.N_FLAG = false;
-        break;
+        return 1;
 
       case 0x3d:
         // DEC A
         this.H_FLAG = u8HalfCarryMask(this.A--) === 0x00;
         this.Z_FLAG = this.A === 0;
         this.N_FLAG = true;
-        break;
+        return 1;
 
       case 0x3e:
         // LD A, d8
         this.A = this._memory.readByte(this.PC++);
-        break;
+        return 2;
 
       case 0x3f:
         // CCF
         this.C_FLAG = !this.C_FLAG;
         this.N_FLAG = false;
         this.H_FLAG = false;
-        break;
+        return 1;
 
       case 0x40:
         // LD B, B
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x41:
         // LD B, C
         this.B = this.C;
-        break;
+        return 1;
 
       case 0x42:
         // LD B, D
         this.B = this.D;
-        break;
+        return 1;
 
       case 0x43:
         // LD B, E
         this.B = this.E;
-        break;
+        return 1;
 
       case 0x44:
         // LD B, H
         this.B = this.H;
-        break;
+        return 1;
 
       case 0x45:
         // LD B, L
         this.B = this.L;
-        break;
+        return 1;
 
       case 0x46:
         // LD B, (HL)
         this.B = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x47:
         // LD B, A
         this.B = this.A;
-        break;
+        return 1;
 
       case 0x48:
         // LD C, B
         this.C = this.B;
-        break;
+        return 1;
 
       case 0x49:
         // LD C, C
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x4a:
         // LD C, D
         this.C = this.D;
-        break;
+        return 1;
 
       case 0x4b:
         // LD C, E
         this.C = this.E;
-        break;
+        return 1;
 
       case 0x4c:
         // LD C, H
         this.C = this.H;
-        break;
+        return 1;
 
       case 0x4d:
         // LD C, L
         this.C = this.L;
-        break;
+        return 1;
 
       case 0x4e:
         // LD C, (HL)
         this.C = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x4f:
         // LD C, A
         this.C = this.A;
-        break;
+        return 1;
 
       case 0x50:
         // LD D, B
         this.D = this.B;
-        break;
+        return 1;
 
       case 0x51:
         // LD D, C
         this.D = this.C;
-        break;
+        return 1;
 
       case 0x52:
         // LD D, D
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x53:
         // LD D, E
         this.D = this.E;
-        break;
+        return 1;
 
       case 0x54:
         // LD D, H
         this.D = this.H;
-        break;
+        return 1;
 
       case 0x55:
         // LD D, L
         this.D = this.L;
-        break;
+        return 1;
 
       case 0x56:
         // LD D, (HL)
         this.D = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x57:
         // LD D, A
         this.D = this.A;
-        break;
+        return 1;
 
       case 0x58:
         // LD E, B
         this.E = this.B;
-        break;
+        return 1;
 
       case 0x59:
         // LD E, C
         this.E = this.C;
-        break;
+        return 1;
 
       case 0x5a:
         // LD E, D
         this.E = this.D;
-        break;
+        return 1;
 
       case 0x5b:
         // LD E, E
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x5c:
         // LD E, H
         this.E = this.H;
-        break;
+        return 1;
 
       case 0x5d:
         // LD E, L
         this.E = this.L;
-        break;
+        return 1;
 
       case 0x5e:
         // LD E, (HL)
         this.E = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x5f:
         // LD E, A
         this.E = this.A;
-        break;
+        return 1;
 
       case 0x60:
         // LD H, B
         this.H = this.B;
-        break;
+        return 1;
 
       case 0x61:
         // LD H, C
         this.H = this.C;
-        break;
+        return 1;
 
       case 0x62:
         // LD H, D
         this.H = this.D;
-        break;
+        return 1;
 
       case 0x63:
         // LD H, E
         this.H = this.E;
-        break;
+        return 1;
 
       case 0x64:
         // LD H, H
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x65:
         // LD H, L
         this.H = this.L;
-        break;
+        return 1;
 
       case 0x66:
         // LD H, (HL)
         this.H = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x67:
         // LD H, A
         this.H = this.A;
-        break;
+        return 1;
 
       case 0x68:
         // LD L, B
         this.L = this.B;
-        break;
+        return 1;
 
       case 0x69:
         // LD L, C
         this.L = this.C;
-        break;
+        return 1;
 
       case 0x6a:
         // LD L, D
         this.L = this.D;
-        break;
+        return 1;
 
       case 0x6b:
         // LD L, E
         this.L = this.E;
-        break;
+        return 1;
 
       case 0x6c:
         // LD L, H
         this.L = this.H;
-        break;
+        return 1;
 
       case 0x6d:
         // LD L, L
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x6e:
         // LD L, (HL)
         this.L = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x6f:
         // LD L, A
         this.L = this.A;
-        break;
+        return 1;
 
       case 0x70:
         // LD (HL), B
         this._memory.writeByte(this.HL, this.B);
-        break;
+        return 2;
 
       case 0x71:
         // LD (HL), C
         this._memory.writeByte(this.HL, this.C);
-        break;
+        return 2;
 
       case 0x72:
         // LD (HL), D
         this._memory.writeByte(this.HL, this.D);
-        break;
+        return 2;
 
       case 0x73:
         // LD (HL), E
         this._memory.writeByte(this.HL, this.E);
-        break;
+        return 2;
 
       case 0x74:
         // LD (HL), H
         this._memory.writeByte(this.HL, this.H);
-        break;
+        return 2;
 
       case 0x75:
         // LD (HL), L
         this._memory.writeByte(this.HL, this.L);
-        break;
+        return 2;
 
       case 0x76:
         // HALT
         this.isHalted = true;
-        break;
+        return 1;
 
       case 0x77:
         // LD (HL), A
         this._memory.writeByte(this.HL, this.A);
-        break;
+        return 2;
 
       case 0x78:
         // LD A, B
         this.A = this.B;
-        break;
+        return 1;
 
       case 0x79:
         // LD A, C
         this.A = this.C;
-        break;
+        return 1;
 
       case 0x7a:
         // LD A, D
         this.A = this.D;
-        break;
+        return 1;
 
       case 0x7b:
         // LD A, E
         this.A = this.E;
-        break;
+        return 1;
 
       case 0x7c:
         // LD A, H
         this.A = this.H;
-        break;
+        return 1;
 
       case 0x7d:
         // LD A, L
         this.A = this.L;
-        break;
+        return 1;
 
       case 0x7e:
         // LD A, (HL)
         this.A = this._memory.readByte(this.HL);
-        break;
+        return 2;
 
       case 0x7f:
         // LD A, A
         // Effectively a NOP
-        break;
+        return 1;
 
       case 0x80:
         // ADD A, B
         this._u8ExecuteAdd(this.B);
-        break;
+        return 1;
 
       case 0x81:
         // ADD A, C
         this._u8ExecuteAdd(this.C);
-        break;
+        return 1;
 
       case 0x82:
         // ADD A, D
         this._u8ExecuteAdd(this.D);
-        break;
+        return 1;
 
       case 0x83:
         // ADD A, E
         this._u8ExecuteAdd(this.E);
-        break;
+        return 1;
 
       case 0x84:
         // ADD A, H
         this._u8ExecuteAdd(this.H);
-        break;
+        return 1;
 
       case 0x85:
         // ADD A, L
         this._u8ExecuteAdd(this.L);
-        break;
+        return 1;
 
       case 0x86:
         // ADD A, (HL)
         this._u8ExecuteAdd(this._memory.readByte(this.HL));
-        break;
+        return 2;
 
       case 0x87:
         // ADD A, A
         this._u8ExecuteAdd(this.A);
-        break;
+        return 1;
 
       case 0x88:
         // ADC A, B
         this._u8ExecuteAdd(this.B, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x89:
         // ADC A, C
         this._u8ExecuteAdd(this.C, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x8a:
         // ADC A, D
         this._u8ExecuteAdd(this.D, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x8b:
         // ADC A, E
         this._u8ExecuteAdd(this.E, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x8c:
         // ADC A, H
         this._u8ExecuteAdd(this.H, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x8d:
         // ADC A, L
         this._u8ExecuteAdd(this.L, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x8e:
         // ADC A, (HL)
         this._u8ExecuteAdd(this._memory.readByte(this.HL), +this.C_FLAG);
-        break;
+        return 2;
 
       case 0x8f:
         // ADC A, A
         this._u8ExecuteAdd(this.A, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x90:
         // SUB B
         this._u8ExecuteSub(this.B);
-        break;
+        return 1;
 
       case 0x91:
         // SUB C
         this._u8ExecuteSub(this.C);
-        break;
+        return 1;
 
       case 0x92:
         // SUB D
         this._u8ExecuteSub(this.D);
-        break;
+        return 1;
 
       case 0x93:
         // SUB E
         this._u8ExecuteSub(this.E);
-        break;
+        return 1;
 
       case 0x94:
         // SUB H
         this._u8ExecuteSub(this.H);
-        break;
+        return 1;
 
       case 0x95:
         // SUB L
         this._u8ExecuteSub(this.L);
-        break;
+        return 1;
 
       case 0x96:
         // SUB (HL)
         this._u8ExecuteSub(this._memory.readByte(this.HL));
-        break;
+        return 2;
 
       case 0x97:
         // SUB A
         this._u8ExecuteSub(this.A);
-        break;
+        return 1;
 
       case 0x98:
         // SBC A, B
         this._u8ExecuteSub(this.B, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x99:
         // SBC A, C
         this._u8ExecuteSub(this.C, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x9a:
         // SBC A, D
         this._u8ExecuteSub(this.D, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x9b:
         // SBC A, E
         this._u8ExecuteSub(this.E, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x9c:
         // SBC A, H
         this._u8ExecuteSub(this.H, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x9d:
         // SBC A, L
         this._u8ExecuteSub(this.L, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0x9e:
         // SBC A, (HL)
         this._u8ExecuteSub(this._memory.readByte(this.HL), +this.C_FLAG);
-        break;
+        return 2;
 
       case 0x9f:
         // SBC A, A
         this._u8ExecuteSub(this.A, +this.C_FLAG);
-        break;
+        return 1;
 
       case 0xa0:
         // AND B
         this._u8ExecuteAnd(this.B);
-        break;
+        return 1;
 
       case 0xa1:
         // AND C
         this._u8ExecuteAnd(this.C);
-        break;
+        return 1;
 
       case 0xa2:
         // AND D
         this._u8ExecuteAnd(this.D);
-        break;
+        return 1;
 
       case 0xa3:
         // AND E
         this._u8ExecuteAnd(this.E);
-        break;
+        return 1;
 
       case 0xa4:
         // AND H
         this._u8ExecuteAnd(this.H);
-        break;
+        return 1;
 
       case 0xa5:
         // AND L
         this._u8ExecuteAnd(this.L);
-        break;
+        return 1;
 
       case 0xa6:
         // AND (HL)
         this._u8ExecuteAnd(this._memory.readByte(this.HL));
-        break;
+        return 2;
 
       case 0xa7:
         // AND A
         this._u8ExecuteAnd(this.A);
-        break;
+        return 1;
 
       case 0xa8:
         // XOR B
         this._u8ExecuteXor(this.B);
-        break;
+        return 1;
 
       case 0xa9:
         // XOR C
         this._u8ExecuteXor(this.C);
-        break;
+        return 1;
 
       case 0xaa:
         // XOR D
         this._u8ExecuteXor(this.D);
-        break;
+        return 1;
 
       case 0xab:
         // XOR E
         this._u8ExecuteXor(this.E);
-        break;
+        return 1;
 
       case 0xac:
         // XOR H
         this._u8ExecuteXor(this.H);
-        break;
+        return 1;
 
       case 0xad:
         // XOR L
         this._u8ExecuteXor(this.L);
-        break;
+        return 1;
 
       case 0xae:
         // XOR (HL)
         this._u8ExecuteXor(this._memory.readByte(this.HL));
-        break;
+        return 2;
 
       case 0xaf:
         // XOR A
         this._u8ExecuteXor(this.A);
-        break;
+        return 1;
 
       case 0xb0:
         // OR B
         this._u8ExecuteOr(this.B);
-        break;
+        return 1;
 
       case 0xb1:
         // OR C
         this._u8ExecuteOr(this.C);
-        break;
+        return 1;
 
       case 0xb2:
         // OR D
         this._u8ExecuteOr(this.D);
-        break;
+        return 1;
 
       case 0xb3:
         // OR E
         this._u8ExecuteOr(this.E);
-        break;
+        return 1;
 
       case 0xb4:
         // OR H
         this._u8ExecuteOr(this.H);
-        break;
+        return 1;
 
       case 0xb5:
         // OR L
         this._u8ExecuteOr(this.L);
-        break;
+        return 1;
 
       case 0xb6:
         // OR (HL)
         this._u8ExecuteOr(this._memory.readByte(this.HL));
-        break;
+        return 2;
 
       case 0xb7:
         // OR A
         this._u8ExecuteOr(this.A);
-        break;
+        return 1;
 
       case 0xb8:
         // CP B
         this._u8ExecuteCp(this.B);
-        break;
+        return 1;
 
       case 0xb9:
         // CP C
         this._u8ExecuteCp(this.C);
-        break;
+        return 1;
 
       case 0xba:
         // CP D
         this._u8ExecuteCp(this.D);
-        break;
+        return 1;
 
       case 0xbb:
         // CP E
         this._u8ExecuteCp(this.E);
-        break;
+        return 1;
 
       case 0xbc:
         // CP H
         this._u8ExecuteCp(this.H);
-        break;
+        return 1;
 
       case 0xbd:
         // CP L
         this._u8ExecuteCp(this.L);
-        break;
+        return 1;
 
       case 0xbe:
         // CP (HL)
         this._u8ExecuteCp(this._memory.readByte(this.HL));
-        break;
+        return 2;
 
       case 0xbf:
         // CP A
         this._u8ExecuteCp(this.A);
-        break;
+        return 1;
 
       case 0xc0:
         // RET NZ
-        this._executeReturn(!this.Z_FLAG);
-        break;
+        return this._executeReturn(!this.Z_FLAG);
 
       case 0xc1:
         // POP BC
@@ -1233,12 +1252,11 @@ export class CPU {
           this._memory.readByte(this.SP++),
           this._memory.readByte(this.SP++)
         );
-        break;
+        return 3;
 
       case 0xc2:
         // JP NZ, 16
-        this._executeConditionalJump(!this.Z_FLAG);
-        break;
+        return this._executeConditionalJump(!this.Z_FLAG);
 
       case 0xc3:
         // JP a16
@@ -1246,53 +1264,59 @@ export class CPU {
           this._memory.readByte(this.PC++),
           this._memory.readByte(this.PC++)
         );
-        break;
+        return 4;
 
       case 0xc4:
         // CALL NZ, a16
-        this._executeConditionalCall(!this.Z_FLAG);
-        break;
+        return this._executeConditionalCall(!this.Z_FLAG);
 
       case 0xc5:
         // PUSH BC
         const [push_bc_low, push_bc_high] = u16Unpair(this.BC);
         this._memory.writeByte(--this.SP, push_bc_high);
         this._memory.writeByte(--this.SP, push_bc_low);
-        break;
+        return 4;
 
       case 0xc6:
         // ADD A, d8
         this._u8ExecuteAdd(this._memory.readByte(this.PC++));
-        break;
+        return 2;
 
       case 0xc7:
         // RST 0
         this._executeReset(0x00);
-        break;
+        return 4;
 
       case 0xc8:
         // RET Z
-        this._executeReturn(this.Z_FLAG);
-        break;
+        return this._executeReturn(this.Z_FLAG);
 
       case 0xc9:
         // RET
         this._executeReturn(true);
-        break;
+        // ignore cycles returned by the helper function, we have a different value here
+        return 4;
 
       case 0xca:
         // JP Z, 16
-        this._executeConditionalJump(this.Z_FLAG);
-        break;
+        return this._executeConditionalJump(this.Z_FLAG);
 
       case 0xcb:
-        this.executeCbOpcode(this._memory.readByte(this.PC++));
-        break;
+        const cbOpcode = this._memory.readByte(this.PC++);
+        this.executeCbOpcode(cbOpcode);
+
+        // Most CB opcodes take 2 cycles, except these 32 of them which take either 3 or 4
+        const cycles3 = [0x46, 0x4e, 0x56, 0x5e, 0x66, 0x6e, 0x76, 0x7e];
+        if (cycles3.includes(cbOpcode)) return 3;
+        // All other 0x-6 and 0x-e take 4 cycles
+        const hexCbOpcode = numToHex(cbOpcode);
+        if (hexCbOpcode.endsWith("6") || hexCbOpcode.endsWith("e")) return 4;
+        // All other take 2
+        return 2;
 
       case 0xcc:
         // CALL Z, a16
-        this._executeConditionalCall(this.Z_FLAG);
-        break;
+        return this._executeConditionalCall(this.Z_FLAG);
 
       case 0xcd:
         // CALL a16
@@ -1310,22 +1334,21 @@ export class CPU {
         // PC to a16
         this.PC = a16;
 
-        break;
+        return 6;
 
       case 0xce:
         // ADC A, d8
         this._u8ExecuteAdd(this._memory.readByte(this.PC++), +this.C_FLAG);
-        break;
+        return 2;
 
       case 0xcf:
         // RST 1
         this._executeReset(0x08);
-        break;
+        return 4;
 
       case 0xd0:
         // RET NC
-        this._executeReturn(!this.C_FLAG);
-        break;
+        return this._executeReturn(!this.C_FLAG);
 
       case 0xd1:
         // POP DE
@@ -1333,68 +1356,64 @@ export class CPU {
           this._memory.readByte(this.SP++),
           this._memory.readByte(this.SP++)
         );
-        break;
+        return 3;
 
       case 0xd2:
         // JP NC, 16
-        this._executeConditionalJump(!this.C_FLAG);
-        break;
+        return this._executeConditionalJump(!this.C_FLAG);
 
       case 0xd3:
       case 0xd4:
         // CALL NC, a16
-        this._executeConditionalCall(!this.C_FLAG);
-        break;
+        return this._executeConditionalCall(!this.C_FLAG);
 
       case 0xd5:
         // PUSH DE
         const [push_de_low, push_de_high] = u16Unpair(this.DE);
         this._memory.writeByte(--this.SP, push_de_high);
         this._memory.writeByte(--this.SP, push_de_low);
-        break;
+        return 4;
 
       case 0xd6:
         // SUB d8
         this._u8ExecuteSub(this._memory.readByte(this.PC++));
-        break;
+        return 2;
 
       case 0xd7:
         // RST 2
         this._executeReset(0x10);
-        break;
+        return 4;
 
       case 0xd8:
         // RET C
-        this._executeReturn(this.C_FLAG);
-        break;
+        return this._executeReturn(this.C_FLAG);
 
       case 0xd9:
         // RETI
         this._executeReturn(true);
         // TODO ENABLE INTERRUPT
-        break;
+        // ignore cycles returned by the helper function, we have a different value here
+        return 4;
 
       case 0xda:
         // JP C, 16
-        this._executeConditionalJump(this.C_FLAG);
-        break;
+        return this._executeConditionalJump(this.C_FLAG);
 
       case 0xdb:
       case 0xdc:
         // CALL C, a16
-        this._executeConditionalCall(this.C_FLAG);
-        break;
+        return this._executeConditionalCall(this.C_FLAG);
 
       case 0xdd:
       case 0xde:
         // SBC A, d8
         this._u8ExecuteSub(this._memory.readByte(this.PC++), +this.C_FLAG);
-        break;
+        return 2;
 
       case 0xdf:
         // RST 3
         this._executeReset(0x18);
-        break;
+        return 4;
 
       case 0xe0:
         // LD (a8), A
@@ -1402,7 +1421,7 @@ export class CPU {
           this._memory.readByte(this.PC++) + 0xff00,
           this.A
         );
-        break;
+        return 3;
 
       case 0xe1:
         // POP HL
@@ -1410,12 +1429,12 @@ export class CPU {
           this._memory.readByte(this.SP++),
           this._memory.readByte(this.SP++)
         );
-        break;
+        return 3;
 
       case 0xe2:
         // LD (C), A
         this._memory.writeByte(0xff00 + this.C, this.A);
-        break;
+        return 2;
 
       case 0xe3:
       case 0xe4:
@@ -1424,17 +1443,17 @@ export class CPU {
         const [push_hl_low, push_hl_high] = u16Unpair(this.HL);
         this._memory.writeByte(--this.SP, push_hl_high);
         this._memory.writeByte(--this.SP, push_hl_low);
-        break;
+        return 4;
 
       case 0xe6:
         // AND d8
         this._u8ExecuteAnd(this._memory.readByte(this.PC++));
-        break;
+        return 2;
 
       case 0xe7:
         // RST 4
         this._executeReset(0x20);
-        break;
+        return 4;
 
       case 0xe8:
         // ADD SP, s8
@@ -1446,12 +1465,12 @@ export class CPU {
         this.SP += applySign(add_sp_s8);
         this.Z_FLAG = false;
         this.N_FLAG = false;
-        break;
+        return 4;
 
       case 0xe9:
         // JP HL
         this.PC = this.HL;
-        break;
+        return 1;
 
       case 0xea:
         // LD(a16), A;
@@ -1460,7 +1479,7 @@ export class CPU {
           this._memory.readByte(this.PC++)
         );
         this._memory.writeByte(ld_a16_addr, this.A);
-        break;
+        return 4;
 
       case 0xeb:
       case 0xec:
@@ -1468,18 +1487,18 @@ export class CPU {
       case 0xee:
         // XOR d8
         this._u8ExecuteXor(this._memory.readByte(this.PC++));
-        break;
+        return 2;
 
       case 0xef:
         // RST 5
         this._executeReset(0x28);
-        break;
+        return 4;
 
       case 0xf0:
         // LD A, (a8)
         const ld_a_a8 = this._memory.readByte(this.PC++);
         this.A = this._memory.readByte(0xff00 + ld_a_a8);
-        break;
+        return 3;
 
       case 0xf1:
         // POP AF
@@ -1487,31 +1506,34 @@ export class CPU {
           this._memory.readByte(this.SP++),
           this._memory.readByte(this.SP++)
         );
-        break;
+        return 3;
 
       case 0xf2:
         // LD A, (C)
         this.A = this._memory.readByte(0xff00 + this.C);
-        break;
+        return 2;
 
       case 0xf3:
+        // TODO implement
+        return 1;
+
       case 0xf4:
       case 0xf5:
         // PUSH AF
         const [push_af_low, push_af_high] = u16Unpair(this.AF);
         this._memory.writeByte(--this.SP, push_af_high);
         this._memory.writeByte(--this.SP, push_af_low);
-        break;
+        return 4;
 
       case 0xf6:
         // OR d8
         this._u8ExecuteOr(this._memory.readByte(this.PC++));
-        break;
+        return 2;
 
       case 0xf7:
         // RST 6
         this._executeReset(0x30);
-        break;
+        return 4;
 
       case 0xf8:
         // LD HL, SP+s8
@@ -1523,12 +1545,12 @@ export class CPU {
         this.H_FLAG =
           u8HalfCarryMask(this.SP) + u8HalfCarryMask(ld_hl_s8) > 0x0f;
         this.C_FLAG = u8Mask(this.SP) + u8Mask(ld_hl_s8) > 0xff;
-        break;
+        return 3;
 
       case 0xf9:
         // LD SP, HL
         this.SP = this.HL;
-        break;
+        return 2;
 
       case 0xfa:
         // LD A, (a16)
@@ -1537,20 +1559,23 @@ export class CPU {
           this._memory.readByte(this.PC++)
         );
         this.A = this._memory.readByte(ld_a_addr);
-        break;
+        return 4;
 
       case 0xfb:
+        // TODO IMPLEMENT
+        return 1;
+
       case 0xfc:
       case 0xfd:
       case 0xfe:
         // CP d8
         this._u8ExecuteCp(this._memory.readByte(this.PC++));
-        break;
+        return 2;
 
       case 0xff:
         // RST 6
         this._executeReset(0x38);
-        break;
+        return 4;
 
       default:
         throw new Error(`Unknown opcode 0x${numToHex(opcode)}`);
@@ -2958,7 +2983,7 @@ export class CPU {
     this.C_FLAG = this.A - op < 0x00;
   }
 
-  _executeCbSwap(byte: u8) {
+  _executeCbSwap(byte: u8): number {
     const [low, high] = u8Unpair(byte);
     const result = u4Pair(high, low);
     this.Z_FLAG = result === 0x00;
@@ -2968,7 +2993,7 @@ export class CPU {
     return result;
   }
 
-  _executeRotateLeft(byte: u8, setZFlag: boolean = true) {
+  _executeRotateLeft(byte: u8, setZFlag: boolean = true): number {
     const MSB = getBitAtPos(byte, 7);
     // shift left and move MSB bit to LSB
     const newValue = (byte << 1) | MSB;
@@ -2981,7 +3006,7 @@ export class CPU {
     return newValue;
   }
 
-  _executeRotateLeftThroughCarry(byte: u8, setZFlag: boolean = true) {
+  _executeRotateLeftThroughCarry(byte: u8, setZFlag: boolean = true): number {
     const MSB = getBitAtPos(byte, 7);
     // shift left and move C_FLAG to LSB bit
     const newValue = (byte << 1) | Number(this.C_FLAG);
@@ -2994,7 +3019,7 @@ export class CPU {
     return newValue;
   }
 
-  _executeRotateRight(byte: u8, setZFlag: boolean = true) {
+  _executeRotateRight(byte: u8, setZFlag: boolean = true): number {
     const LSB = getBitAtPos(byte, 0);
     // shift right and move LSB bit to MSB
     const newValue = setBitAtPos(byte >> 1, 7, LSB);
@@ -3007,7 +3032,7 @@ export class CPU {
     return newValue;
   }
 
-  _executeRotateRightThroughCarry(byte: u8, setZFlag: boolean = true) {
+  _executeRotateRightThroughCarry(byte: u8, setZFlag: boolean = true): number {
     const LSB = getBitAtPos(byte, 0);
     // shift right and move LSB bit to MSB
     const newValue = setBitAtPos(byte >> 1, 7, Number(this.C_FLAG));
@@ -3020,7 +3045,7 @@ export class CPU {
     return newValue;
   }
 
-  _executeShiftLeft(byte: u8) {
+  _executeShiftLeft(byte: u8): number {
     const MSB = getBitAtPos(byte, 7);
     // shift left and set LSB bit to 0
     const newValue = (byte << 1) | 0;
@@ -3033,7 +3058,7 @@ export class CPU {
     return newValue;
   }
 
-  _executeShiftRight(byte: u8, setMSBToZero: boolean = false) {
+  _executeShiftRight(byte: u8, setMSBToZero: boolean = false): number {
     const LSB = getBitAtPos(byte, 0);
     const MSB = getBitAtPos(byte, 7);
     // shift right and leave MSB unchanged
@@ -3058,18 +3083,26 @@ export class CPU {
     return setBitAtPos(byte, pos, value);
   }
 
-  _executeConditionalJump(shouldJump: boolean) {
+  _executeConditionalJump(shouldJump: boolean): number {
     const lowByte = this._memory.readByte(this.PC++);
     const highByte = this._memory.readByte(this.PC++);
-    if (shouldJump) this.PC = u8Pair(lowByte, highByte);
+    if (shouldJump) {
+      this.PC = u8Pair(lowByte, highByte);
+      return 4;
+    }
+    return 3;
   }
 
-  _executeConditionalRelativeJump(shouldJump: boolean) {
+  _executeConditionalRelativeJump(shouldJump: boolean): number {
     const s8 = applySign(this._memory.readByte(this.PC++));
-    if (shouldJump) this.PC += s8;
+    if (shouldJump) {
+      this.PC += s8;
+      return 3;
+    }
+    return 2;
   }
 
-  _executeConditionalCall(shouldCall: boolean) {
+  _executeConditionalCall(shouldCall: boolean): number {
     // a16 from PC
     const a16 = u8Pair(
       this._memory.readByte(this.PC++),
@@ -3084,7 +3117,10 @@ export class CPU {
 
       // PC to a16
       this.PC = a16;
+
+      return 6;
     }
+    return 3;
   }
 
   _executeReset(low: number) {
@@ -3100,6 +3136,8 @@ export class CPU {
         this._memory.readByte(this.SP++),
         this._memory.readByte(this.SP++)
       );
+      return 5;
     }
+    return 2;
   }
 }
