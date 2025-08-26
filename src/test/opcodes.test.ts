@@ -418,12 +418,12 @@ describe("LD r, (HL) and LD (HL), r opcodes", () => {
   });
 
   test("0xE0: LDH (a8), A", () => {
-    const cpu = createCPUWithROM([0xe0, 0x50]); // LDH (0x50), A
+    const cpu = createCPUWithROM([0xe0, 0x51]); // LDH (0x50), A
     cpu.A = 0xde;
 
     cpu.tick();
 
-    expect((cpu as any)._memory.readByte(0xff50)).toBe(0xde);
+    expect((cpu as any)._memory.readByte(0xff51)).toBe(0xde);
   });
 
   test("0xF0: LDH A, (a8)", () => {
