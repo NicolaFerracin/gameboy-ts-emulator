@@ -6,7 +6,8 @@ describe("CPU Register Access", () => {
   let cpu: CPU;
 
   beforeEach(() => {
-    cpu = new CPU(new Memory(new Uint8Array()), new PPU());
+    const mem = new Memory(new Uint8Array());
+    cpu = new CPU(mem, new PPU(mem));
   });
 
   test("8-bit register masking (A)", () => {

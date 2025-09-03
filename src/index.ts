@@ -6,8 +6,8 @@ import { loadROM } from "./rom.ts";
 
 const main = async () => {
   const bootRom = await loadROM(BOOT_ROM_PATH);
-  const ppu = new PPU();
   const memory = new Memory(bootRom);
+  const ppu = new PPU(memory);
   const cpu = new CPU(memory, ppu);
 
   while (true) cpu.tick();

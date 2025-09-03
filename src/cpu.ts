@@ -192,11 +192,11 @@ export class CPU {
     const cyclesTaken = this.executeOpcode(opcode); // we are using a reference table that uses a M cycles instead of T cycles
 
     // Advance PPU
-    this._ppu.advance(cyclesTaken);
+    this._ppu.tick(cyclesTaken);
 
     // Handle HALT sequence
     while (this.isHalted) {
-      this._ppu.advance(1);
+      this._ppu.tick(1);
       const pending = this._memory.getIE() & this._memory.getIF();
       if (pending !== 0) this.isHalted = false;
     }

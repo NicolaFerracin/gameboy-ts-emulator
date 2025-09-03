@@ -29,10 +29,10 @@ export class Memory {
   }
 
   getIE() {
-    return this.mem[INTERRUPT_ENABLE_ADDR];
+    return this.readByte(INTERRUPT_ENABLE_ADDR);
   }
 
   getIF() {
-    return this.mem[INTERRUPT_FLAG_ADDR];
+    return this.readByte(INTERRUPT_FLAG_ADDR);
   }
 }
