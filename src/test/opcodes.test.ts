@@ -3,9 +3,12 @@ import { Memory } from "../memory";
 import { PPU } from "../ppu";
 
 function createCPUWithROM(rom: number[]): CPU {
-  const memory = new Memory(new Uint8Array(0x8000).map((_, i) => rom[i] ?? 0));
-  const cpu = new CPU(memory, new PPU(memory));
-  return cpu;
+  const ppu = new PPU();
+  const memory = new Memory(
+    new Uint8Array(0x8000).map((_, i) => rom[i] ?? 0),
+    ppu
+  );
+  return new CPU(memory, ppu);
 }
 
 describe("Opcode tests: LD r, d8 and LD r1, r2", () => {

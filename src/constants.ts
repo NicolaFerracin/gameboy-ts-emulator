@@ -8,3 +8,10 @@ export const VBLANK_MODE = 1 as const;
 export const OAM_MODE = 2 as const;
 export const TRANSFER_MODE = 3 as const;
 export const ALL_MODES = [HBLANK_MODE, VBLANK_MODE, OAM_MODE, TRANSFER_MODE];
+
+export const LCDC_ADDR = 0xff40;
+export const STAT_ADDR = 0xff41;
+export const LY_ADDR = 0xff44;
+export const LYC_ADDR = 0xff45;
+export const PPU_RESERVED_MEMORY_START = 0xff40;
+export const PPU_RESERVED_MEMORY_END = 0xff4b;

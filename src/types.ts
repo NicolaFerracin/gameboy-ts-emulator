@@ -1,6 +1,7 @@
 import { ALL_MODES } from "./constants";
 
 // TS do not have native 4/8/16 bit types, so we create a wrapper to indicate what we are working with
+// TODO create u8/u4/u16 classes
 export type u4 = number;
 export type u8 = number;
 export type u16 = number;
