@@ -21,9 +21,10 @@ export class Memory {
 
     // ATTACH MEMORY TO PPU
     this._ppu = ppu;
-    this._ppu.attachMemory(
+    this._ppu.allocateReservedMemory(
       this.mem.slice(PPU_RESERVED_MEMORY_START, PPU_RESERVED_MEMORY_END)
     );
+    this._ppu.attachMemory(this);
   }
 
   readByte(addr: u16): u8 {
