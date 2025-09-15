@@ -79,10 +79,7 @@ export class PPU {
 
     // Handle mode transitions
     if (currMode !== newMode) {
-      // Update STAT.mode
       let stat = this._getStat();
-      stat = setBitAtPos(stat, 0, getBitAtPos(this._mode, 0));
-      stat = setBitAtPos(stat, 1, getBitAtPos(this._mode, 1));
 
       // Fire STAT interrupt if enabled for mode
       const modeToStatInterrupt: Partial<Record<Mode, number>> = {
@@ -91,7 +88,7 @@ export class PPU {
         [OAM_MODE]: 5,
       };
       let ifFlag = this._mem.getIF();
-      const statBit = modeToStatInterrupt[this._mode];
+      const statBit = modeToStatInterrupt[newMode];
       if (typeof statBit === "number" && getBitAtPos(stat, statBit) === 1)
         ifFlag = setBitAtPos(ifFlag, 1, 1);
 
@@ -131,6 +128,9 @@ export class PPU {
 
   _getStat = () => {
     let stat = this._reservedMemory[NORMALIZED_STAT_ADDR];
+    // Update STAT mode
+    stat = setBitAtPos(stat, 0, getBitAtPos(this._mode, 0));
+    stat = setBitAtPos(stat, 1, getBitAtPos(this._mode, 1));
 
     // update LYC==LY flag
     const lyc = this._reservedMemory[NORMALIZED_LYC_ADDR];
