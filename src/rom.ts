@@ -1,11 +1,14 @@
-import { readFile } from "fs/promises";
+export async function loadROM(pathOrUrl: string): Promise<Uint8Array> {
+  // Browser path
+  if (typeof window !== "undefined") {
+    const res = await fetch(pathOrUrl);
+    if (!res.ok) throw new Error(`Failed to fetch ${pathOrUrl}: ${res.status}`);
+    const buf = await res.arrayBuffer();
+    return new Uint8Array(buf);
+  }
 
-export async function loadROM(path: string): Promise<Uint8Array> {
-  const buffer = await readFile(path);
-  console.log(`Loaded ROM (${buffer.length} bytes)`);
-
-  // Using TypedArray has many benefits:
-  // - they work exactly like the hardware memory works, with 1-byte chunks
-  // - it performs automatic wrapping of out-of-bounds values (i.e. arr[x] = 257 becomes 2 (257%255))
-  return new Uint8Array(buffer);
+  // Node path (tests/CLI)
+  const { readFile } = await import("fs/promises");
+  const buf = await readFile(pathOrUrl);
+  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
 }

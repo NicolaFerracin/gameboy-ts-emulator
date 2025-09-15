@@ -51,3 +51,6 @@ export const setBitAtPos = (
   const mask = Math.pow(2, pos);
   return bit === 1 ? value | mask : value & ~mask;
 };
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

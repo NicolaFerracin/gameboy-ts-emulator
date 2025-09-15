@@ -12,6 +12,7 @@ import {
   VBLANK_MODE,
 } from "./constants";
 import { Memory } from "./memory";
+import { Renderer } from "./renderer";
 import { Mode, u8 } from "./types";
 import { getBitAtPos, setBitAtPos } from "./utils";
 
@@ -24,6 +25,7 @@ const NORMALIZED_LYC_ADDR = LYC_ADDR - PPU_RESERVED_MEMORY_START;
 export class PPU {
   private _reservedMemory: Uint8Array;
   private _mem: Memory | null;
+  private _renderer: Renderer | null;
   private _ly: number = 0; // TODO narrow type to values 0..153
   private __mode: Mode = OAM_MODE;
   private __dot: number = 0; // TODO narrow type to values 0..455
@@ -52,6 +54,7 @@ export class PPU {
   constructor() {
     this._reservedMemory = new Uint8Array();
     this._mem = null;
+    this._renderer = null;
   }
 
   allocateReservedMemory(reservedMemory: Uint8Array) {
@@ -62,11 +65,16 @@ export class PPU {
     this._mem = memory;
   }
 
+  attachScreen(renderer: Renderer) {
+    this._renderer = renderer;
+  }
+
   _isLCDOn = () =>
     getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 7) === 1;
 
   _updateMode = () => {
     if (!this._mem) throw new Error("No Memory was attached to the PPU");
+    if (!this._renderer) throw new Error("No Renderer was attached to the PPU");
     const currMode = this._mode;
     const newMode =
       this.ly >= 144 && this.ly <= 153
@@ -100,6 +108,10 @@ export class PPU {
       if (newMode === VBLANK_MODE) {
         // Set IF bit0
         ifFlag = setBitAtPos(ifFlag, 0, 1);
+      }
+
+      if (newMode === TRANSFER_MODE) {
+        this._renderer.renderScanline(this.ly);
       }
 
       // Write updated IF and STAT values

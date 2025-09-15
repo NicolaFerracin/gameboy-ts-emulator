@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<meta charset="utf-8" />
+<title>GB Emu</title>
+<style>
+    canvas {
+        width: 640px;
+        height: 576px;
+        image-rendering: pixelated;
+        border: 1px solid #444;
+        background: #ccc;
+    }
+
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+    }
+</style>
+
+<body>
+    <canvas id="screen" width="160" height="144"></canvas>
+    <script type="module" src="/src/index.ts"></script>
+</body>
+
+</html>
