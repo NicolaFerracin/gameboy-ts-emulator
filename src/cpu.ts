@@ -189,14 +189,14 @@ export class CPU {
     this.PC++;
 
     // Execute OPCODE
-    const cyclesTaken = this.executeOpcode(opcode); // we are using a reference table that uses a M cycles instead of T cycles
+    const mCycles = this.executeOpcode(opcode); // we are using a reference table that uses a M cycles instead of T cycles
 
     // Advance PPU
-    this._ppu.tick(cyclesTaken);
+    this._ppu.tick(mCycles * 4);
 
     // Handle HALT sequence
     while (this.isHalted) {
-      this._ppu.tick(1);
+      this._ppu.tick(4);
       const pending = this._memory.getIE() & this._memory.getIF();
       if (pending !== 0) this.isHalted = false;
     }
@@ -206,10 +206,12 @@ export class CPU {
       this.imeEnableDelay--;
       if (this.imeEnableDelay === 0) this.IME = true;
     }
+
+    return mCycles;
   }
 
   executeOpcode(opcode: u8) {
-    console.log("Opcode", numToHex(opcode));
+    // console.log("Opcode", numToHex(opcode));
 
     switch (opcode) {
       case 0x00:

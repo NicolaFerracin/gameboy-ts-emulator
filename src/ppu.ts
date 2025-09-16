@@ -29,6 +29,7 @@ export class PPU {
   private _ly: number = 0; // TODO narrow type to values 0..153
   private __mode: Mode = OAM_MODE;
   private __dot: number = 0; // TODO narrow type to values 0..455
+  frameReady: boolean = false;
 
   get ly(): number {
     return this._ly;
@@ -65,12 +66,20 @@ export class PPU {
     this._mem = memory;
   }
 
-  attachScreen(renderer: Renderer) {
+  attachRenderer(renderer: Renderer) {
     this._renderer = renderer;
   }
 
   _isLCDOn = () =>
     getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 7) === 1;
+
+  isTileAddressingUnsigned = (): boolean =>
+    getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 4) === 1;
+
+  getBgMapBase = (): number =>
+    getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 3) === 0
+      ? 0x9800
+      : 0x9c00;
 
   _updateMode = () => {
     if (!this._mem) throw new Error("No Memory was attached to the PPU");
@@ -110,7 +119,7 @@ export class PPU {
         ifFlag = setBitAtPos(ifFlag, 0, 1);
       }
 
-      if (newMode === TRANSFER_MODE) {
+      if (newMode === TRANSFER_MODE && this._isLCDOn()) {
         this._renderer.renderScanline(this.ly);
       }
 
@@ -162,18 +171,19 @@ export class PPU {
     this._reservedMemory[NORMALIZED_STAT_ADDR] = stat;
   };
 
-  tick(dots: number) {
+  tick(tCycles: number) {
+    let dots = tCycles;
     if (!this._isLCDOn()) return;
 
-    while (dots > 0) {
-      // decrease dots left
-      dots--;
-
+    while (dots-- > 0) {
       // increase dot position
       this._dot++;
 
       // optionally increase LY
       if (this._dot === 0) this.ly++;
+
+      // set frame once we reach the end of the last visible scanlines
+      if (this.ly === 144) this.frameReady = true;
 
       // Update mode
       this._updateMode();

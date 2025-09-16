@@ -2,6 +2,8 @@ export const BOOT_ROM_PATH = "./roms/dmg_boot.bin";
 
 export const INTERRUPT_ENABLE_ADDR = 0xffff;
 export const INTERRUPT_FLAG_ADDR = 0xff0f;
+export const SCX_ADDR = 0xff43;
+export const SCY_ADDR = 0xff42;
 
 export const HBLANK_MODE = 0 as const;
 export const VBLANK_MODE = 1 as const;

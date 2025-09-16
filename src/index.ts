@@ -6,20 +6,32 @@ import { Renderer } from "./renderer.ts";
 import { loadROM } from "./rom.ts";
 import { GBScreen } from "./screen.ts";
 
-const main = async () => {
+const DOTS_PER_FRAME = 456 * 154; // 70_224
+const MCYCLES_PER_FRAME = DOTS_PER_FRAME / 4; // 17_556
+
+const run = async () => {
   const canvas = document.getElementById("screen");
   const screen = new GBScreen(canvas as HTMLCanvasElement);
   const bootRom = await loadROM(BOOT_ROM_PATH);
+  const gameRom = await loadROM(import.meta.env.VITE_GAME_ROM);
   const ppu = new PPU();
-  const memory = new Memory(bootRom, ppu);
+  const memory = new Memory(bootRom, gameRom, ppu);
   const renderer = new Renderer(memory, ppu, screen);
   const cpu = new CPU(memory, ppu);
 
-  for (let i = 0; i < 100000; i++) {
-    renderer.renderScanline(i % 144);
-  }
+  function runOneFrame() {
+    let remaining = MCYCLES_PER_FRAME;
+    while (remaining > 0) {
+      remaining -= cpu.tick();
+    }
 
-  // while (true) cpu.tick();
+    if (ppu.frameReady) {
+      screen.present(renderer.buf); // blit once per frame
+      ppu.frameReady = false;
+    }
+    requestAnimationFrame(runOneFrame);
+  }
+  requestAnimationFrame(runOneFrame);
 };
 
-main().catch(console.error);
+run();
