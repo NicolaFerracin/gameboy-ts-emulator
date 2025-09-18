@@ -71,18 +71,22 @@ export class Memory {
     this.isBiosEnabled = false;
   }
 
+  // Who is allowed to interrupt
   getIE() {
     return this.readByte(INTERRUPT_ENABLE_ADDR);
   }
 
+  // Who requested the interrupt
   getIF() {
     return this.readByte(INTERRUPT_FLAG_ADDR);
   }
 
+  // Scroll X
   getSCX() {
     return this.readByte(SCX_ADDR);
   }
 
+  // Scroll Y
   getSCY() {
     return this.readByte(SCY_ADDR);
   }

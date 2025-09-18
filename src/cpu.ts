@@ -1,3 +1,4 @@
+import { INTERRUPT_FLAG_ADDR } from "./constants.ts";
 import type { Memory } from "./memory";
 import { PPU } from "./ppu.ts";
 import { u16, u8 } from "./types";
@@ -181,7 +182,41 @@ export class CPU {
     this.imeEnableDelay = 0;
   }
 
-  tick() {
+  tick(): number {
+    // Handle IME delay
+    if (this.imeEnableDelay > 0) {
+      if (--this.imeEnableDelay === 0) this.IME = true;
+    }
+
+    const pending = this._memory.getIE() & this._memory.getIF(); // is there anyone who requested the interrupt (IF) which is also allowed (IE)?
+
+    // Service Interrupt
+    if (this.IME && pending) {
+      this.IME = false;
+      const [vector, bit] = this._getHighestPriorityVector(pending);
+      const IF = setBitAtPos(this._memory.getIF(), bit, 0);
+      this._memory.writeByte(INTERRUPT_FLAG_ADDR, IF);
+
+      // PC to SP
+      const [low, high] = u16Unpair(this.PC);
+      this._memory.writeByte(--this.SP, high);
+      this._memory.writeByte(--this.SP, low);
+
+      // Vector to PC
+      this.PC = vector;
+
+      this._ppu.tick(20);
+
+      return 5; // MCycles = 5 ; TCycles = 20
+    }
+
+    // Handle HALT sequence
+    while (this.isHalted) {
+      this._ppu.tick(4);
+      if (pending !== 0) this.isHalted = false;
+      return 1; // MCycle = 1 ; TCycle = 4
+    }
+
     // Read byte from memory
     const opcode = this._memory.readByte(this.PC);
 
@@ -193,21 +228,23 @@ export class CPU {
 
     // Advance PPU
     this._ppu.tick(mCycles * 4);
-
-    // Handle HALT sequence
-    while (this.isHalted) {
-      this._ppu.tick(4);
-      const pending = this._memory.getIE() & this._memory.getIF();
-      if (pending !== 0) this.isHalted = false;
-    }
-
-    // Handle IME delay
-    if (opcode !== 0xfb && this.imeEnableDelay > 0) {
-      this.imeEnableDelay--;
-      if (this.imeEnableDelay === 0) this.IME = true;
-    }
+    if (this.isHalted) return this.tick(); // call tick recursively to enter the isHalted while loop. Done this way to be able to return the mCycle correctly
 
     return mCycles;
+  }
+
+  _getHighestPriorityVector(pending: u8) {
+    const vectors = [
+      0x40, // VBlank
+      0x48, // STAT
+      0x50, // Timer
+      0x58, // Serial
+      0x60, // Joypad
+    ];
+    for (let bit = 0; bit <= 4; bit++)
+      if (getBitAtPos(pending, bit)) return [vectors[bit], bit];
+
+    return [0, 0];
   }
 
   executeOpcode(opcode: u8) {
