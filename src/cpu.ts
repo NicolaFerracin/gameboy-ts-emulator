@@ -301,7 +301,10 @@ export class CPU {
 
       case 0x08:
         // LD (a16), SP
-        const ld_a6_addr = this._memory.readByte(this.PC++);
+        const ld_a6_addr = u8Pair(
+          this._memory.readByte(this.PC++),
+          this._memory.readByte(this.PC++)
+        );
         const [ld_a6_low, ld_a6_high] = u16Unpair(this.SP);
         this._memory.writeByte(ld_a6_addr, ld_a6_low);
         this._memory.writeByte(u8Mask(ld_a6_addr + 1), ld_a6_high);
@@ -590,18 +593,21 @@ export class CPU {
       case 0x34:
         // INC (HL)
         const inc_hl_prev = this._memory.readByte(this.HL);
+        const inc_hl_next = u8Mask(inc_hl_prev + 1);
         this.H_FLAG = u8HalfCarryMask(inc_hl_prev) + 1 > 0x0f;
-        this.Z_FLAG = this.H === 0;
+        this.Z_FLAG = inc_hl_next === 0;
         this.N_FLAG = false;
-        this._memory.writeByte(this.HL, u8Mask(inc_hl_prev + 1));
+        this._memory.writeByte(this.HL, inc_hl_next);
         return 3;
 
       case 0x35:
         // DEC (HL)
         const dec_hl_prev = this._memory.readByte(this.HL);
-        this.H_FLAG = u8HalfCarryMask(this.H--) === 0x00;
-        this.Z_FLAG = this.H === 0;
+        const dec_hl_next = u8Mask(dec_hl_prev - 1);
+        this.H_FLAG = u8HalfCarryMask(dec_hl_prev) === 0x00;
+        this.Z_FLAG = dec_hl_next === 0;
         this.N_FLAG = true;
+        this._memory.writeByte(this.HL, dec_hl_next);
         return 3;
 
       case 0x36:
