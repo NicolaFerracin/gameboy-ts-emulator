@@ -54,3 +54,8 @@ export const setBitAtPos = (
 
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+export const isVRAMArea = (addr: u8): boolean =>
+  addr >= 0x8000 && addr <= 0x9fff;
+export const isOAMArea = (addr: u8): boolean =>
+  addr >= 0xfe00 && addr <= 0xfe9f;

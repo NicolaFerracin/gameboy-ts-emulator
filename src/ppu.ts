@@ -144,7 +144,18 @@ export class PPU {
   writeByte(addr: u8, value: u8) {
     if (addr === STAT_ADDR) return this._setStat(value);
     else if (addr === LY_ADDR) this.ly = 0;
-    else this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
+    else if (addr === LCDC_ADDR) {
+      const wasLcdOn = this._isLCDOn();
+      const isLcdOn = getBitAtPos(value, 7) === 1;
+      // When turning the LCD on/off, we need to perform a bunch of resetting
+      if (wasLcdOn !== isLcdOn) {
+        this._mode = isLcdOn ? OAM_MODE : HBLANK_MODE;
+        this._dot = 0;
+        this.ly = 0;
+        this.frameReady = false;
+      }
+      this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
+    } else this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
   }
 
   _getStat = () => {

@@ -1,13 +1,16 @@
 import {
   INTERRUPT_ENABLE_ADDR,
   INTERRUPT_FLAG_ADDR,
+  OAM_MODE,
   PPU_RESERVED_MEMORY_END,
   PPU_RESERVED_MEMORY_START,
   SCX_ADDR,
   SCY_ADDR,
+  TRANSFER_MODE,
 } from "./constants.ts";
 import { PPU } from "./ppu.ts";
 import { u16, u8 } from "./types";
+import { isOAMArea, isVRAMArea } from "./utils.ts";
 
 export class Memory {
   private mem: Uint8Array;
@@ -35,9 +38,29 @@ export class Memory {
     this._ppu.attachMemory(this);
   }
 
+  isVRAMBlocked(addr: u16) {
+    return (
+      isVRAMArea(addr) &&
+      this._ppu?._isLCDOn() &&
+      this._ppu?._mode === TRANSFER_MODE
+    );
+  }
+
+  isOAMBlocked(addr: u16) {
+    return (
+      isOAMArea(addr) &&
+      this._ppu?._isLCDOn() &&
+      (this._ppu?._mode === OAM_MODE || this._ppu?._mode === TRANSFER_MODE)
+    );
+  }
+
   readByte(addr: u16): u8 {
     if (!this._ppu) throw new Error("No PPU was attached to the Memory");
     if (this._ppu.isRervedAddr(addr)) return this._ppu.readByte(addr);
+
+    // handle VRAM and OAM access
+    if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return 0xff;
+
     if (addr < 0x8000) {
       if (this.isBiosEnabled && addr < this.bootRom.length)
         return this.bootRom[addr];
@@ -53,6 +76,10 @@ export class Memory {
       this._ppu.writeByte(addr, value);
       return;
     }
+
+    // handle VRAM and OAM access
+    if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return;
+
     // handles BIOS end
     if (addr === 0xff50 && this.isBiosEnabled && value !== 0x00) {
       this.isBiosEnabled = false;
