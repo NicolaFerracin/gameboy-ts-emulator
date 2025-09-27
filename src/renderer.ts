@@ -50,4 +50,8 @@ export class Renderer {
       this.buf[ly * 160 + x] = colorId;
     }
   }
+
+  present() {
+    this._screen.present(this.buf);
+  }
 }

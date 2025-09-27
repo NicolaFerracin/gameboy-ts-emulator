@@ -113,6 +113,7 @@ export class PPU {
       if (newMode === VBLANK_MODE) {
         // Set IF bit0
         ifFlag = setBitAtPos(ifFlag, 0, 1);
+        if (this._isLCDOn()) this._renderer.present();
       }
 
       if (newMode === TRANSFER_MODE && this._isLCDOn() && this.ly < 144) {
@@ -147,8 +148,9 @@ export class PPU {
         this._mode = isLcdOn ? OAM_MODE : HBLANK_MODE;
         this._dot = 0;
         this.ly = 0;
-        this.frameReady = false;
-        this._prevLyCoincidence = false;
+        this.frameReady = false; // TODO remove?
+        this._prevLyCoincidence = isLcdOn ? this._prevLyCoincidence : false;
+        this._updateLyCoincidenceEdge();
       }
       this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
     } else if (addr === LYC_ADDR) {
@@ -222,7 +224,7 @@ export class PPU {
       }
 
       // set frame once we reach the end of the last visible scanlines
-      if (this.ly === 144) this.frameReady = true;
+      if (this.ly === 144) this.frameReady = true; // TODO remove?
 
       // Update mode
       this._updateMode();

@@ -26,7 +26,7 @@ const run = async () => {
     }
 
     if (ppu.frameReady) {
-      screen.present(renderer.buf); // blit once per frame
+      renderer.present(); // blit once per frame
       ppu.frameReady = false;
     }
     requestAnimationFrame(runOneFrame);
