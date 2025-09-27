@@ -25,7 +25,7 @@ export class Renderer {
     const scx = this._mem.getSCX();
     const scy = this._mem.getSCY();
     const bgMapBase = this._ppu.getBgMapBase();
-    const isTileAddressingUnsigned = this._ppu.isTileAddressingUnsigned();
+    const useUnsigned = this._ppu.isTileAddressingUnsigned(); // LCDC bit4
 
     for (let x = 0; x < 160; x++) {
       const wx = u8Mask(x + scx);
@@ -35,14 +35,15 @@ export class Renderer {
       const tileRow = wy >>> 3;
       const mapIndex = tileRow * 32 + tileCol;
       const tileId = this._mem.readByte(bgMapBase + mapIndex);
-      const tileBase = isTileAddressingUnsigned
-        ? 0x8000 + (tileId << 4)
-        : 0x9000 + (applySign(tileId) << 4);
+      const tileDataBase = useUnsigned ? 0x8000 : 0x9000;
+
+      const index = useUnsigned ? tileId : applySign(tileId); // int8
+      const tileAdr = tileDataBase + index * 16; // 16 bytes per tile
 
       const tileX = wx & 7; // equivalent to mapping the world y coordinate to the y within the single 8x8 tile
       const tileY = wy & 7;
-      const lo = this._mem.readByte(tileBase + (tileY << 1) + 0);
-      const hi = this._mem.readByte(tileBase + (tileY << 1) + 1);
+      const lo = this._mem.readByte(tileAdr + (tileY << 1) + 0);
+      const hi = this._mem.readByte(tileAdr + (tileY << 1) + 1);
       const bit = 7 - tileX;
       const c0 = getBitAtPos(lo, bit);
       const c1 = getBitAtPos(hi, bit);
