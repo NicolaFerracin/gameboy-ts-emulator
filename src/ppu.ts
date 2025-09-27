@@ -29,6 +29,7 @@ export class PPU {
   private _ly: number = 0; // TODO narrow type to values 0..153
   private __mode: Mode = OAM_MODE;
   private __dot: number = 0; // TODO narrow type to values 0..455
+  private _prevLyCoincidence = false;
   frameReady: boolean = false;
 
   get ly(): number {
@@ -109,11 +110,6 @@ export class PPU {
       if (typeof statBit === "number" && getBitAtPos(stat, statBit) === 1)
         ifFlag = setBitAtPos(ifFlag, 1, 1);
 
-      // TODO	4.	Set access policy (so Memory can enforce):
-      // •	Mode 3: block VRAM + OAM
-      // •	Mode 2: block OAM, allow VRAM
-      // •	Modes 0/1: allow both
-
       if (newMode === VBLANK_MODE) {
         // Set IF bit0
         ifFlag = setBitAtPos(ifFlag, 0, 1);
@@ -153,9 +149,15 @@ export class PPU {
         this._dot = 0;
         this.ly = 0;
         this.frameReady = false;
+        this._prevLyCoincidence = false;
       }
       this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
-    } else this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
+    } else if (addr === LYC_ADDR) {
+      this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
+      this._updateLyCoincidenceEdge();
+    } else {
+      this._reservedMemory[addr - PPU_RESERVED_MEMORY_START] = value;
+    }
   }
 
   _getStat = () => {
@@ -182,6 +184,28 @@ export class PPU {
     this._reservedMemory[NORMALIZED_STAT_ADDR] = stat;
   };
 
+  _updateLyCoincidenceEdge = () => {
+    const newLyCoincidence =
+      this._reservedMemory[NORMALIZED_LYC_ADDR] === this.ly;
+    const stat = this._getStat();
+
+    // if rising edge and STAT.6 enabled
+    if (
+      newLyCoincidence &&
+      !this._prevLyCoincidence &&
+      getBitAtPos(stat, 6) &&
+      this._mem
+    ) {
+      // set IF.1
+      this._mem.writeByte(
+        INTERRUPT_FLAG_ADDR,
+        setBitAtPos(this._mem.getIF(), 1, 1)
+      );
+    }
+
+    this._prevLyCoincidence = newLyCoincidence;
+  };
+
   tick(tCycles: number) {
     let dots = tCycles;
     if (!this._isLCDOn()) return;
@@ -191,7 +215,12 @@ export class PPU {
       this._dot++;
 
       // optionally increase LY
-      if (this._dot === 0) this.ly++;
+      if (this._dot === 0) {
+        this.ly++;
+
+        // Check LYC=LY coincidence edge
+        this._updateLyCoincidenceEdge();
+      }
 
       // set frame once we reach the end of the last visible scanlines
       if (this.ly === 144) this.frameReady = true;
