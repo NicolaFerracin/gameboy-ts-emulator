@@ -115,13 +115,12 @@ export class PPU {
         ifFlag = setBitAtPos(ifFlag, 0, 1);
       }
 
-      if (newMode === TRANSFER_MODE && this._isLCDOn()) {
+      if (newMode === TRANSFER_MODE && this._isLCDOn() && this.ly < 144) {
         this._renderer.renderScanline(this.ly);
       }
 
-      // Write updated IF and STAT values
+      // Write updated IF value
       this._mem.writeByte(INTERRUPT_FLAG_ADDR, ifFlag);
-      this._reservedMemory[NORMALIZED_STAT_ADDR] = stat;
     }
 
     this._mode = newMode;
