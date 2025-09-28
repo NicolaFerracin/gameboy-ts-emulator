@@ -183,6 +183,13 @@ export class CPU {
   }
 
   tick(): number {
+    // Handle DMA
+    if (this._memory.isDmaActive()) {
+      this._memory.dmaTransferStep();
+      this._ppu.tick(4);
+      return 1;
+    }
+
     // Handle IME delay
     if (this.imeEnableDelay > 0) {
       if (--this.imeEnableDelay === 0) this.IME = true;

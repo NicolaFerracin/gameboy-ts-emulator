@@ -1,4 +1,6 @@
 import {
+  DMA_ADDR,
+  DMA_TRANSFER_BASE_DST,
   INTERRUPT_ENABLE_ADDR,
   INTERRUPT_FLAG_ADDR,
   OAM_MODE,
@@ -10,7 +12,7 @@ import {
 } from "./constants.ts";
 import { PPU } from "./ppu.ts";
 import { u16, u8 } from "./types";
-import { isOAMArea, isVRAMArea } from "./utils.ts";
+import { isHRAMArea, isOAMArea, isVRAMArea, u8Mask } from "./utils.ts";
 
 export class Memory {
   private mem: Uint8Array;
@@ -18,6 +20,9 @@ export class Memory {
   private isBiosEnabled: boolean;
   private gameRom: Uint8Array;
   private bootRom: Uint8Array;
+  private dmaActive = false;
+  private dmaSrcBase = 0;
+  private dmaIndex = 0;
 
   constructor(bootRom: Uint8Array, gameRom: Uint8Array, ppu: PPU) {
     // INITIALIAZE RAM
@@ -36,6 +41,20 @@ export class Memory {
       this.mem.subarray(PPU_RESERVED_MEMORY_START, PPU_RESERVED_MEMORY_END + 1)
     );
     this._ppu.attachMemory(this);
+  }
+
+  isDmaActive() {
+    return this.dmaActive;
+  }
+
+  dmaTransferStep() {
+    console.log("dmatransferstep", this.dmaIndex);
+    // we move one step = 1 byte
+    const src = u8Mask(this.dmaSrcBase + this.dmaIndex);
+    const dst = DMA_TRANSFER_BASE_DST + this.dmaIndex;
+    this.mem[dst] = this.readByte(src, true); // write directly to the OAM space
+
+    if (++this.dmaIndex === 160) this.dmaActive = false;
   }
 
   isVRAMBlocked(addr: u16) {
@@ -59,6 +78,9 @@ export class Memory {
     if (this._ppu.isRervedAddr(addr)) return this._ppu.readByte(addr);
 
     if (!ignoreBlock) {
+      // during DMA transfer, we allow only reading from the HRAM area
+      if (this.isDmaActive() && !isHRAMArea(addr)) return 0xff;
+
       // handle VRAM and OAM access
       if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return 0xff;
     }
@@ -74,12 +96,24 @@ export class Memory {
 
   writeByte(addr: u16, value: u8, ignoreBlock: boolean = false): void {
     if (!this._ppu) throw new Error("No PPU was attached to the Memory");
+
+    // Arm the DMA
+    if (addr === DMA_ADDR) {
+      this.dmaActive = true;
+      this.dmaSrcBase = value << 8;
+      this.dmaIndex = 0;
+    }
+
+    // Handle PPU reserved addresses
     if (this._ppu.isRervedAddr(addr)) {
       this._ppu.writeByte(addr, value);
       return;
     }
 
     if (!ignoreBlock) {
+      // during DMA transfer, we allow only writing from the HRAM area
+      if (this.isDmaActive() && !isHRAMArea(addr)) return;
+
       // handle VRAM and OAM access
       if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return;
     }

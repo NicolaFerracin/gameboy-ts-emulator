@@ -17,3 +17,9 @@ export const LY_ADDR = 0xff44;
 export const LYC_ADDR = 0xff45;
 export const PPU_RESERVED_MEMORY_START = 0xff40;
 export const PPU_RESERVED_MEMORY_END = 0xff4b;
+
+export const DMA_ADDR = 0xff46;
+export const DMA_TRANSFER_BASE_DST = 0xfe00;
+
+export const HRAM_START = 0xff80;
+export const HRAM_END = 0xfffe;

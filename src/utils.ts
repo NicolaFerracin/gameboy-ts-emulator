@@ -1,3 +1,4 @@
+import { HRAM_END, HRAM_START } from "./constants";
 import { u16, u4, u8 } from "./types";
 
 // Apply any mask to a value
@@ -59,3 +60,5 @@ export const isVRAMArea = (addr: u8): boolean =>
   addr >= 0x8000 && addr <= 0x9fff;
 export const isOAMArea = (addr: u8): boolean =>
   addr >= 0xfe00 && addr <= 0xfe9f;
+export const isHRAMArea = (addr: u8): boolean =>
+  addr >= HRAM_START && addr <= HRAM_END;
