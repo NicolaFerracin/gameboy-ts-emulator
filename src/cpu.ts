@@ -213,7 +213,17 @@ export class CPU {
     // Handle HALT sequence
     while (this.isHalted) {
       this._ppu.tick(4);
-      if (pending !== 0) this.isHalted = false;
+
+      // Wake conditions:
+      // - If IME=1: wake when an enabled interrupt is pending
+      // - If IME=0: wake when any interrupt is requested (common wake behavior)
+      const isStillPending = Boolean(
+        this._memory.getIE() & this._memory.getIF()
+      );
+      if (this.IME ? isStillPending : Boolean(this._memory.getIF())) {
+        this.isHalted = false;
+      }
+
       return 1; // MCycle = 1 ; TCycle = 4
     }
 
