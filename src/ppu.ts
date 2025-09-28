@@ -14,7 +14,7 @@ import {
 import { Memory } from "./memory";
 import { Renderer } from "./renderer";
 import { Mode, u8 } from "./types";
-import { getBitAtPos, setBitAtPos } from "./utils";
+import { getBitAtPos, setBitAtPos, u8Mask } from "./utils";
 
 const MAX_DOTS = 456;
 const MAX_LY = 154;
@@ -31,6 +31,7 @@ export class PPU {
   private __dot: number = 0; // TODO narrow type to values 0..455
   private _prevLyCoincidence = false;
   frameReady: boolean = false;
+  winLine: number = 0;
 
   get ly(): number {
     return this._ly;
@@ -74,11 +75,20 @@ export class PPU {
   _isLCDOn = () =>
     getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 7) === 1;
 
+  _isBgOn = () =>
+    getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 0) === 1;
+  _isWinOn = () =>
+    getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 5) === 1;
+
   isTileAddressingUnsigned = (): boolean =>
     getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 4) === 1;
 
   getBgMapBase = (): number =>
     getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 3) === 0
+      ? 0x9800
+      : 0x9c00;
+  getWinMapBase = (): number =>
+    getBitAtPos(this._reservedMemory[NORMALIZED_LCDC_ADDR], 6) === 0
       ? 0x9800
       : 0x9c00;
 
@@ -207,6 +217,15 @@ export class PPU {
     this._prevLyCoincidence = newLyCoincidence;
   };
 
+  _updateWinLine() {
+    if (this._mem) {
+      const winOn = this._isWinOn();
+      const wy = this._mem.readByte(0xff4a);
+      if (winOn && this.ly >= wy) this.winLine = u8Mask(this.winLine + 1);
+      else this.winLine = 0; // or keep last; many emus reset when window not active
+    }
+  }
+
   tick(tCycles: number) {
     let dots = tCycles;
     if (!this._isLCDOn()) return;
@@ -218,6 +237,9 @@ export class PPU {
       // optionally increase LY
       if (this._dot === 0) {
         this.ly++;
+
+        // Update winline
+        this._updateWinLine();
 
         // Check LYC=LY coincidence edge
         this._updateLyCoincidenceEdge();
