@@ -54,12 +54,14 @@ export class Memory {
     );
   }
 
-  readByte(addr: u16): u8 {
+  readByte(addr: u16, ignoreBlock: boolean = false): u8 {
     if (!this._ppu) throw new Error("No PPU was attached to the Memory");
     if (this._ppu.isRervedAddr(addr)) return this._ppu.readByte(addr);
 
-    // handle VRAM and OAM access
-    if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return 0xff;
+    if (!ignoreBlock) {
+      // handle VRAM and OAM access
+      if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return 0xff;
+    }
 
     if (addr < 0x8000) {
       if (this.isBiosEnabled && addr < this.bootRom.length)
@@ -70,15 +72,17 @@ export class Memory {
     return this.mem[addr] ?? 0xff;
   }
 
-  writeByte(addr: u16, value: u8): void {
+  writeByte(addr: u16, value: u8, ignoreBlock: boolean = false): void {
     if (!this._ppu) throw new Error("No PPU was attached to the Memory");
     if (this._ppu.isRervedAddr(addr)) {
       this._ppu.writeByte(addr, value);
       return;
     }
 
-    // handle VRAM and OAM access
-    if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return;
+    if (!ignoreBlock) {
+      // handle VRAM and OAM access
+      if (this.isVRAMBlocked(addr) || this.isOAMBlocked(addr)) return;
+    }
 
     // handles BIOS end
     if (addr === 0xff50 && this.isBiosEnabled && value !== 0x00) {
@@ -99,22 +103,22 @@ export class Memory {
   }
 
   // Who is allowed to interrupt
-  getIE() {
-    return this.readByte(INTERRUPT_ENABLE_ADDR);
+  getIE(ignoreBlock: boolean = false) {
+    return this.readByte(INTERRUPT_ENABLE_ADDR, ignoreBlock);
   }
 
   // Who requested the interrupt
-  getIF() {
-    return this.readByte(INTERRUPT_FLAG_ADDR);
+  getIF(ignoreBlock: boolean = false) {
+    return this.readByte(INTERRUPT_FLAG_ADDR, ignoreBlock);
   }
 
   // Scroll X
-  getSCX() {
-    return this.readByte(SCX_ADDR);
+  getSCX(ignoreBlock: boolean = false) {
+    return this.readByte(SCX_ADDR, ignoreBlock);
   }
 
   // Scroll Y
-  getSCY() {
-    return this.readByte(SCY_ADDR);
+  getSCY(ignoreBlock: boolean = false) {
+    return this.readByte(SCY_ADDR, ignoreBlock);
   }
 }

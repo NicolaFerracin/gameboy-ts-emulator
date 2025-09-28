@@ -115,7 +115,7 @@ export class PPU {
         [VBLANK_MODE]: 4,
         [OAM_MODE]: 5,
       };
-      let ifFlag = this._mem.getIF();
+      let ifFlag = this._mem.getIF(true);
       const statBit = modeToStatInterrupt[newMode];
       if (typeof statBit === "number" && getBitAtPos(stat, statBit) === 1)
         ifFlag = setBitAtPos(ifFlag, 1, 1);
@@ -131,7 +131,7 @@ export class PPU {
       }
 
       // Write updated IF value
-      this._mem.writeByte(INTERRUPT_FLAG_ADDR, ifFlag);
+      this._mem.writeByte(INTERRUPT_FLAG_ADDR, ifFlag, true);
     }
 
     this._mode = newMode;
@@ -210,7 +210,8 @@ export class PPU {
       // set IF.1
       this._mem.writeByte(
         INTERRUPT_FLAG_ADDR,
-        setBitAtPos(this._mem.getIF(), 1, 1)
+        setBitAtPos(this._mem.getIF(true), 1, 1),
+        true
       );
     }
 
@@ -220,7 +221,7 @@ export class PPU {
   _updateWinLine() {
     if (this._mem) {
       const winOn = this._isWinOn();
-      const wy = this._mem.readByte(0xff4a);
+      const wy = this._mem.readByte(0xff4a, true);
       if (winOn && this.ly >= wy) this.winLine = u8Mask(this.winLine + 1);
       else this.winLine = 0; // or keep last; many emus reset when window not active
     }

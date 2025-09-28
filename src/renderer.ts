@@ -24,15 +24,15 @@ export class Renderer {
 
     const isBgOn = this._ppu._isBgOn();
     const isWinOn = this._ppu._isWinOn();
-    const scx = this._mem.getSCX();
-    const scy = this._mem.getSCY();
+    const scx = this._mem.getSCX(true);
+    const scy = this._mem.getSCY(true);
     const bgMapBase = this._ppu.getBgMapBase(); // bit3
     const winMapBase = this._ppu.getWinMapBase(); // bit6
     const useUnsigned = this._ppu.isTileAddressingUnsigned(); // LCDC bit4
     const tileBase = useUnsigned ? 0x8000 : 0x9000;
-    const wx = this._mem.readByte(0xff4b); // WX - window-specific
-    const wy = this._mem.readByte(0xff4a); // WY - window-specific
-    const bgp = this._mem.readByte(0xff47);
+    const wx = this._mem.readByte(0xff4b, true); // WX - window-specific
+    const wy = this._mem.readByte(0xff4a, true); // WY - window-specific
+    const bgp = this._mem.readByte(0xff47, true);
 
     for (let x = 0; x < 160; x++) {
       let useWindow = false;
@@ -61,13 +61,13 @@ export class Renderer {
       const tileCol = tx >>> 3; // equivalent to doing Math.floor(wx / 8) as we need to map the world x and y to the the 8x8 tiles
       const tileRow = ty >>> 3;
       const mapIndex = applyMask(tileRow * 32 + tileCol, 0x3ff);
-      const tileId = this._mem.readByte(mapBase + mapIndex);
+      const tileId = this._mem.readByte(mapBase + mapIndex, true);
       const idx = useUnsigned ? tileId : applySign(tileId);
       const tileAdr = tileBase + idx * 16;
       const tileX = tx & 7; // equivalent to mapping the world y coordinate to the y within the single 8x8 tile
       const tileY = ty & 7;
-      const lo = this._mem.readByte(tileAdr + (tileY << 1) + 0);
-      const hi = this._mem.readByte(tileAdr + (tileY << 1) + 1);
+      const lo = this._mem.readByte(tileAdr + (tileY << 1) + 0, true);
+      const hi = this._mem.readByte(tileAdr + (tileY << 1) + 1, true);
       const bit = 7 - tileX;
       const c0 = getBitAtPos(lo, bit);
       const c1 = getBitAtPos(hi, bit);
